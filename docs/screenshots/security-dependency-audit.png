@@ -1,0 +1,10 @@
+# Security Dependency Audit Screenshot
+
+This file should contain a screenshot showing dependency security audit results.
+
+To capture this screenshot:
+1. Run npm audit and pip-audit
+2. Show security audit results
+3. Demonstrate vulnerability scanning
+4. Take screenshot of audit output
+5. Save as security-dependency-audit.png

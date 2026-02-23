@@ -1,0 +1,105 @@
+# UptimeRobot Configuration for GoldVision
+# This file can be used to configure monitoring services
+
+monitors:
+  - name: "GoldVision API Health"
+    type: "http"
+    url: "https://your-api-domain.com/health"
+    interval: 60 # seconds
+    timeout: 30 # seconds
+    expected_status: 200
+    expected_content: "ok"
+
+  - name: "GoldVision Frontend"
+    type: "http"
+    url: "https://your-frontend-domain.com"
+    interval: 60
+    timeout: 30
+    expected_status: 200
+
+  - name: "GoldVision Forecast Endpoint"
+    type: "http"
+    url: "https://your-api-domain.com/forecast"
+    method: "POST"
+    headers:
+      Content-Type: "application/json"
+    body: '{"horizon_days": 7}'
+    interval: 300 # 5 minutes
+    timeout: 30
+    expected_status: 200
+
+# UptimeRobot API Configuration
+uptimerobot:
+  api_key: "${UPTIMEROBOT_API_KEY}"
+  base_url: "https://api.uptimerobot.com/v2"
+
+  # Create monitors via API
+  create_monitors: true
+
+  # Alert contacts
+  alert_contacts:
+    - type: "email"
+      value: "admin@yourcompany.com"
+    - type: "webhook"
+      value: "https://your-slack-webhook.com/uptime"
+
+# PagerDuty Integration (optional)
+pagerduty:
+  integration_key: "${PAGERDUTY_INTEGRATION_KEY}"
+  service_name: "GoldVision API"
+
+# Slack Integration (optional)
+slack:
+  webhook_url: "${SLACK_WEBHOOK_URL}"
+  channel: "#alerts"
+  username: "GoldVision Monitor"
+
+# Email Alerts (optional)
+email:
+  smtp_server: "smtp.gmail.com"
+  smtp_port: 587
+  username: "${EMAIL_USERNAME}"
+  password: "${EMAIL_PASSWORD}"
+  from_address: "alerts@yourcompany.com"
+  to_addresses:
+    - "admin@yourcompany.com"
+    - "devops@yourcompany.com"
+
+# Health Check Scripts
+scripts:
+  - name: "full_health_check.sh"
+    path: "./scripts/health-check.sh"
+    description: "Comprehensive health check script"
+
+  - name: "database_check.sh"
+    path: "./scripts/db-health-check.sh"
+    description: "Database connectivity and health check"
+
+# Monitoring Intervals
+intervals:
+  health_check: 60 # seconds
+  metrics_collection: 30 # seconds
+  log_analysis: 300 # seconds
+  alert_evaluation: 60 # seconds
+
+# Alert Rules
+alert_rules:
+  - name: "High Error Rate"
+    condition: "error_rate > 0.1"
+    duration: "5m"
+    severity: "critical"
+
+  - name: "Service Down"
+    condition: "health_check_failed"
+    duration: "1m"
+    severity: "critical"
+
+  - name: "High Response Time"
+    condition: "avg_response_time > 5s"
+    duration: "10m"
+    severity: "warning"
+
+  - name: "Price Fetch Failures"
+    condition: "consecutive_price_fetch_failures > 3"
+    duration: "5m"
+    severity: "warning"

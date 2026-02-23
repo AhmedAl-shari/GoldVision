@@ -1,0 +1,10 @@
+# PWA Offline Page Screenshot
+
+This file should contain a screenshot of the offline fallback page.
+
+To capture this screenshot:
+1. Install GoldVision as a PWA
+2. Disconnect from the internet
+3. Navigate to a page that's not cached
+4. Take a screenshot of the offline page
+5. Save as pwa-offline-page.png

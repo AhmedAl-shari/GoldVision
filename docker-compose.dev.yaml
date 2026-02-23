@@ -1,0 +1,114 @@
+services:
+  # PostgreSQL Database (dev)
+  postgres:
+    image: postgres:15-alpine
+    container_name: goldvision-postgres-dev
+    environment:
+      POSTGRES_USER: goldvision
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme}
+      POSTGRES_DB: goldvision
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data_dev:/var/lib/postgresql/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U goldvision"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis for caching (dev)
+  redis:
+    image: redis:7-alpine
+    container_name: goldvision-redis-dev
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data_dev:/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Prophet Service (dev)
+  prophet:
+    build:
+      context: ./prophet-service
+      dockerfile: Dockerfile
+    container_name: goldvision-prophet-dev
+    ports:
+      - "8001:8001"
+    environment:
+      - PYTHONUNBUFFERED=1
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Backend Service (Node/Express + Prisma) (dev)
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    container_name: goldvision-backend-dev
+    ports:
+      - "8000:8000"
+    env_file:
+      - ./env/dev.env
+    environment:
+      - NODE_ENV=development
+      - PORT=8000
+      - DATABASE_URL=postgresql://goldvision:${POSTGRES_PASSWORD:-changeme}@postgres:5432/goldvision
+      - PROPHET_URL=http://prophet:8001
+      - JWT_SECRET=${JWT_SECRET:-dev-secret-key}
+      - SESSION_SECRET=${SESSION_SECRET:-dev-session-secret}
+      - NEWS_PROVIDER=${NEWS_PROVIDER:-marketaux}
+      - NEWS_API_KEY=${NEWS_API_KEY:-}
+      - VAPID_PUBLIC_KEY=${VAPID_PUBLIC_KEY:-}
+      - VAPID_PRIVATE_KEY=${VAPID_PRIVATE_KEY:-}
+      - CORS_ORIGINS=["http://localhost:3000","http://localhost:5173"]
+      - FRONTEND_URL=http://localhost:3000
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID:-}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET:-}
+      - GOOGLE_CALLBACK_URL=http://localhost:8000/auth/google/callback
+      # Optional: set to your machine's WiFi/LAN IP (e.g. 192.168.1.105) so LAN Access QR code works from your phone
+      - HOST_LAN_IP=${HOST_LAN_IP:-}
+    volumes:
+      - ./prisma:/app/prisma
+      - ./data:/app/data
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      prophet:
+        condition: service_started
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    container_name: goldvision-frontend-dev
+    ports:
+      - "3000:3000"
+    environment:
+      - VITE_API_BASE_URL=http://localhost:8000
+      - VITE_BACKEND_URL=http://backend:8000
+    volumes:
+      - ./frontend/src:/app/src:ro
+      - ./frontend/public:/app/public:ro
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+volumes:
+  postgres_data_dev:
+    driver: local
+  redis_data_dev:
+    driver: local

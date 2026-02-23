@@ -1,0 +1,604 @@
+openapi: 3.0.3
+info:
+  title: GoldVision API
+  description: Gold price forecasting and alerting API
+  version: 1.0.0
+  contact:
+    name: GoldVision API Support
+    email: support@goldvision.com
+
+servers:
+  - url: http://localhost:8000
+    description: Development server
+
+paths:
+  /health:
+    get:
+      summary: Health check
+      description: Returns the health status of the API
+      operationId: health_check
+      responses:
+        "200":
+          description: API is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "ok"
+                  timestamp:
+                    type: string
+                    format: date-time
+                    example: "2023-12-01T10:00:00Z"
+
+  /prices:
+    get:
+      summary: Get gold prices
+      description: Retrieve gold prices with optional date filtering
+      operationId: get_prices
+      parameters:
+        - name: from
+          in: query
+          description: Start date (YYYY-MM-DD)
+          required: false
+          schema:
+            type: string
+            format: date
+            example: "2023-01-01"
+        - name: to
+          in: query
+          description: End date (YYYY-MM-DD)
+          required: false
+          schema:
+            type: string
+            format: date
+            example: "2023-12-31"
+        - name: limit
+          in: query
+          description: Maximum number of prices to return
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 1000
+            default: 100
+      responses:
+        "200":
+          description: List of gold prices
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  prices:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        ds:
+                          type: string
+                          format: date-time
+                          example: "2023-12-01T00:00:00Z"
+                        price:
+                          type: number
+                          format: float
+                          example: 2400.50
+                  count:
+                    type: integer
+                    example: 100
+
+    post:
+      summary: Ingest price data
+      description: Ingest gold price data (admin/dev only)
+      operationId: ingest_prices
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                rows:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      ds:
+                        type: string
+                        format: date-time
+                        example: "2023-12-01T00:00:00Z"
+                      price:
+                        type: number
+                        format: float
+                        example: 2400.50
+                    required:
+                      - ds
+                      - price
+              required:
+                - rows
+      responses:
+        "200":
+          description: Prices ingested successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  inserted:
+                    type: integer
+                    example: 2
+        "422":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /fetch-latest:
+    post:
+      summary: Fetch latest price
+      description: Fetch and store the latest gold price from external API
+      operationId: fetch_latest_price
+      responses:
+        "200":
+          description: Latest price fetched successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Latest price fetched and stored"
+                  price:
+                    type: number
+                    format: float
+                    example: 2400.50
+                  triggered_alerts:
+                    type: integer
+                    example: 1
+        "503":
+          description: Price provider error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /forecast:
+    post:
+      summary: Generate forecast
+      description: Generate gold price forecast using Prophet
+      operationId: generate_forecast
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                horizon_days:
+                  type: integer
+                  minimum: 1
+                  maximum: 365
+                  default: 30
+                  example: 14
+                include_history:
+                  type: boolean
+                  default: false
+                  example: true
+      responses:
+        "200":
+          description: Forecast generated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  generated_at:
+                    type: string
+                    format: date-time
+                    example: "2023-12-01T10:00:00Z"
+                  horizon_days:
+                    type: integer
+                    example: 14
+                  history:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        ds:
+                          type: string
+                          format: date-time
+                          example: "2023-12-01T00:00:00Z"
+                        price:
+                          type: number
+                          format: float
+                          example: 2400.50
+                  forecast:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        ds:
+                          type: string
+                          format: date-time
+                          example: "2023-12-15T00:00:00Z"
+                        yhat:
+                          type: number
+                          format: float
+                          example: 2450.25
+                        yhat_lower:
+                          type: number
+                          format: float
+                          example: 2400.10
+                        yhat_upper:
+                          type: number
+                          format: float
+                          example: 2500.40
+        "400":
+          description: Insufficient data for forecasting
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /alerts:
+    get:
+      summary: Get alerts
+      description: Retrieve alerts, optionally filtered by user
+      operationId: get_alerts
+      parameters:
+        - name: user_id
+          in: query
+          description: User ID to filter alerts
+          required: false
+          schema:
+            type: integer
+            example: 1
+      responses:
+        "200":
+          description: List of alerts
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  alerts:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                          example: 1
+                        rule_type:
+                          type: string
+                          enum: [price_above, price_below]
+                          example: "price_above"
+                        threshold:
+                          type: number
+                          format: float
+                          example: 2500.0
+                        direction:
+                          type: string
+                          enum: [above, below]
+                          example: "above"
+                        triggered_at:
+                          type: string
+                          format: date-time
+                          nullable: true
+                          example: "2023-12-01T10:00:00Z"
+                        created_at:
+                          type: string
+                          format: date-time
+                          example: "2023-12-01T09:00:00Z"
+                  count:
+                    type: integer
+                    example: 2
+
+    post:
+      summary: Create alert
+      description: Create a new price alert
+      operationId: create_alert
+      parameters:
+        - name: user_id
+          in: query
+          description: User ID (defaults to 1 for demo)
+          required: false
+          schema:
+            type: integer
+            default: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                rule_type:
+                  type: string
+                  enum: [price_above, price_below]
+                  example: "price_above"
+                threshold:
+                  type: number
+                  format: float
+                  minimum: 0.01
+                  example: 2500.0
+                direction:
+                  type: string
+                  enum: [above, below]
+                  example: "above"
+              required:
+                - rule_type
+                - threshold
+                - direction
+      responses:
+        "200":
+          description: Alert created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  alert:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                        example: 1
+                      rule_type:
+                        type: string
+                        example: "price_above"
+                      threshold:
+                        type: number
+                        format: float
+                        example: 2500.0
+                      direction:
+                        type: string
+                        example: "above"
+                      triggered_at:
+                        type: string
+                        format: date-time
+                        nullable: true
+                      created_at:
+                        type: string
+                        format: date-time
+                        example: "2023-12-01T09:00:00Z"
+        "422":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /alerts/{alert_id}:
+    delete:
+      summary: Delete alert
+      description: Delete an alert by ID
+      operationId: delete_alert
+      parameters:
+        - name: alert_id
+          in: path
+          description: Alert ID to delete
+          required: true
+          schema:
+            type: integer
+            example: 1
+        - name: user_id
+          in: query
+          description: User ID (defaults to 1 for demo)
+          required: false
+          schema:
+            type: integer
+            default: 1
+      responses:
+        "200":
+          description: Alert deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  deleted:
+                    type: boolean
+                    example: true
+        "404":
+          description: Alert not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /admin/model-health:
+    get:
+      summary: Get model health status
+      description: Get model health metrics including MAPE trends and drift status
+      operationId: get_model_health
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Model health status retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  mape_trends:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        date:
+                          type: string
+                          format: date
+                        mape:
+                          type: number
+                  drift_status:
+                    type: object
+                    properties:
+                      psi:
+                        type: number
+                      level:
+                        type: string
+                        enum: [green, yellow, red]
+                  retrain_suggested:
+                    type: boolean
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "403":
+          $ref: "#/components/responses/ForbiddenError"
+
+  /forecast/compare:
+    post:
+      summary: Compare forecasting models
+      description: Compare Prophet with baseline models and return metrics
+      operationId: compare_models
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                horizon_days:
+                  type: integer
+                  minimum: 1
+                  maximum: 365
+                  default: 30
+                holidays_enabled:
+                  type: boolean
+                  default: true
+                weekly_seasonality:
+                  type: boolean
+                  default: true
+                yearly_seasonality:
+                  type: boolean
+                  default: true
+      responses:
+        "200":
+          description: Model comparison completed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  prophet_metrics:
+                    type: object
+                    properties:
+                      model_name:
+                        type: string
+                      mae:
+                        type: number
+                      mape:
+                        type: number
+                      mase:
+                        type: number
+                  naive_last_metrics:
+                    type: object
+                    properties:
+                      model_name:
+                        type: string
+                      mae:
+                        type: number
+                      mape:
+                        type: number
+                      mase:
+                        type: number
+                  seasonal_naive_metrics:
+                    type: object
+                    properties:
+                      model_name:
+                        type: string
+                      mae:
+                        type: number
+                      mape:
+                        type: number
+                      mase:
+                        type: number
+                  arima_metrics:
+                    type: object
+                    properties:
+                      model_name:
+                        type: string
+                      mae:
+                        type: number
+                      mape:
+                        type: number
+                      mase:
+                        type: number
+                  dm_test_prophet_vs_naive:
+                    type: number
+                  dm_test_prophet_vs_seasonal:
+                    type: number
+                  dm_test_prophet_vs_arima:
+                    type: number
+                  generated_at:
+                    type: string
+                    format: date-time
+                  horizon_days:
+                    type: integer
+                  training_window:
+                    type: integer
+        "400":
+          $ref: "#/components/responses/BadRequestError"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /drift/status:
+    get:
+      summary: Get data drift status
+      description: Get population stability index (PSI) for data drift detection
+      operationId: get_drift_status
+      responses:
+        "200":
+          description: Drift status retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  psi:
+                    type: number
+                    description: Population Stability Index
+                  level:
+                    type: string
+                    enum: [green, yellow, red]
+                    description: Drift severity level
+                  reference_window_days:
+                    type: integer
+                    description: Reference window size in days
+                  current_window_days:
+                    type: integer
+                    description: Current window size in days
+                  last_calculated:
+                    type: string
+                    format: date-time
+                    description: When PSI was last calculated
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+components:
+  schemas:
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          example: "Validation error"
+        detail:
+          type: string
+          example: "Invalid threshold value"
+        timestamp:
+          type: string
+          format: date-time
+          example: "2023-12-01T10:00:00Z"
+      required:
+        - error
+        - timestamp

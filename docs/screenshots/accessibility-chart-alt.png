@@ -1,0 +1,10 @@
+# Accessibility Chart Alt Text Screenshot
+
+This file should contain a screenshot showing chart accessibility features.
+
+To capture this screenshot:
+1. Open GoldVision Trends page
+2. Show chart with proper alt text and data table
+3. Demonstrate screen reader compatibility
+4. Take screenshot of accessible chart implementation
+5. Save as accessibility-chart-alt.png

@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>API Test</title>
+  </head>
+  <body>
+    <h1>API Test</h1>
+    <div id="status">Loading...</div>
+    <script>
+      // Test API client
+      const API_BASE_URL = (() => {
+        const hostname = window.location.hostname;
+        const isLocalhost =
+          hostname === "localhost" || hostname === "127.0.0.1";
+        return isLocalhost ? "/api" : `http://${hostname}:8000`;
+      })();
+
+      console.log("API_BASE_URL:", API_BASE_URL);
+
+      fetch(`${API_BASE_URL}/health`)
+        .then((response) => response.json())
+        .then((data) => {
+          document.getElementById(
+            "status"
+          ).innerHTML = `✅ API Working: ${JSON.stringify(data)}`;
+        })
+        .catch((error) => {
+          document.getElementById(
+            "status"
+          ).innerHTML = `❌ API Error: ${error.message}`;
+          console.error("API Error:", error);
+        });
+    </script>
+  </body>
+</html>

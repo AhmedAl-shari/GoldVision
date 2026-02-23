@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Redirecting to Login...</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .box {
+            text-align: center;
+            background: rgba(0,0,0,0.2);
+            padding: 40px;
+            border-radius: 10px;
+        }
+        .spinner {
+            border: 4px solid rgba(255,255,255,0.3);
+            border-top: 4px solid white;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="box">
+        <h1>🔐 Clearing Old Authentication</h1>
+        <div class="spinner"></div>
+        <p>Clearing localStorage and cookies...</p>
+        <p id="status">Please wait...</p>
+    </div>
+    <script>
+        // Immediately clear everything
+        localStorage.clear();
+        sessionStorage.clear();
+        
+        // Clear cookies
+        document.cookie.split(";").forEach(c => {
+            document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
+        });
+        
+        document.getElementById('status').textContent = '✅ Cleared! Redirecting...';
+        
+        // Redirect immediately
+        setTimeout(() => {
+            window.location.href = '/login';
+        }, 1000);
+    </script>
+</body>
+</html>
+

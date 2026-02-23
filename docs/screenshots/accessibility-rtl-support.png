@@ -1,0 +1,10 @@
+# Accessibility RTL Support Screenshot
+
+This file should contain a screenshot showing RTL language support.
+
+To capture this screenshot:
+1. Open GoldVision in Arabic language
+2. Show RTL layout and text direction
+3. Demonstrate UI element mirroring
+4. Take screenshot of RTL interface
+5. Save as accessibility-rtl-support.png

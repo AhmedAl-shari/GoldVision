@@ -1,0 +1,106 @@
+groups:
+  - name: goldvision-slos
+    rules:
+      # Forecast latency SLO
+      - alert: ForecastLatencyHigh
+        expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket{job="goldvision-api",method="POST",path="/forecast"}[5m])) > 0.8
+        for: 5m
+        labels:
+          severity: warning
+          service: goldvision-api
+          slo: forecast-latency
+        annotations:
+          summary: "Forecast P95 latency is above 800ms"
+          description: "P95 forecast latency is {{ $value }}s (threshold: 0.8s) for 5 minutes"
+          runbook_url: "https://github.com/goldvision/docs/blob/main/runbooks/forecast-latency.md"
+
+      # HTTP 5xx error rate SLO
+      - alert: HighErrorRate
+        expr: rate(http_requests_total{job="goldvision-api",status=~"5.."}[10m]) / rate(http_requests_total{job="goldvision-api"}[10m]) > 0.01
+        for: 10m
+        labels:
+          severity: warning
+          service: goldvision-api
+          slo: error-rate
+        annotations:
+          summary: "HTTP 5xx error rate is above 1%"
+          description: "5xx error rate is {{ $value | humanizePercentage }} (threshold: 1%) for 10 minutes"
+          runbook_url: "https://github.com/goldvision/docs/blob/main/runbooks/error-rate.md"
+
+      # Readiness probe failure
+      - alert: ReadinessProbeFailed
+        expr: up{job="goldvision-api",instance=~".*:8000"} == 0 or probe_success{job="goldvision-api",probe="readyz"} == 0
+        for: 0m
+        labels:
+          severity: critical
+          service: goldvision-api
+          slo: readiness
+        annotations:
+          summary: "Readiness probe failed"
+          description: "Service is not ready to serve traffic"
+          runbook_url: "https://github.com/goldvision/docs/blob/main/runbooks/readiness.md"
+
+      # Prophet service health
+      - alert: ProphetServiceDown
+        expr: up{job="prophet-service",instance=~".*:8001"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: prophet-service
+          slo: availability
+        annotations:
+          summary: "Prophet service is down"
+          description: "Prophet forecasting service is not responding"
+          runbook_url: "https://github.com/goldvision/docs/blob/main/runbooks/prophet-service.md"
+
+      # Database connection issues
+      - alert: DatabaseConnectionFailed
+        expr: increase(database_connection_errors_total[5m]) > 0
+        for: 0m
+        labels:
+          severity: critical
+          service: goldvision-api
+          slo: database-availability
+        annotations:
+          summary: "Database connection failures detected"
+          description: "{{ $value }} database connection errors in the last 5 minutes"
+          runbook_url: "https://github.com/goldvision/docs/blob/main/runbooks/database.md"
+
+      # News cache staleness
+      - alert: NewsCacheStale
+        expr: time() - news_cache_last_update_timestamp > 900
+        for: 5m
+        labels:
+          severity: warning
+          service: goldvision-api
+          slo: news-freshness
+        annotations:
+          summary: "News cache is stale"
+          description: "News cache hasn't been updated for {{ $value }} seconds"
+          runbook_url: "https://github.com/goldvision/docs/blob/main/runbooks/news-cache.md"
+
+      # Memory usage high
+      - alert: HighMemoryUsage
+        expr: process_resident_memory_bytes{job="goldvision-api"} / 1024 / 1024 / 1024 > 1
+        for: 5m
+        labels:
+          severity: warning
+          service: goldvision-api
+          slo: resource-usage
+        annotations:
+          summary: "High memory usage detected"
+          description: "Memory usage is {{ $value }}GB (threshold: 1GB)"
+          runbook_url: "https://github.com/goldvision/docs/blob/main/runbooks/memory-usage.md"
+
+      # Disk space low
+      - alert: LowDiskSpace
+        expr: (node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"}) < 0.1
+        for: 5m
+        labels:
+          severity: warning
+          service: goldvision-api
+          slo: disk-space
+        annotations:
+          summary: "Low disk space"
+          description: "Disk space is {{ $value | humanizePercentage }} available"
+          runbook_url: "https://github.com/goldvision/docs/blob/main/runbooks/disk-space.md"

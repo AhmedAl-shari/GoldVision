@@ -1,0 +1,1556 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "GoldVision API",
+    "version": "1.0.0",
+    "description": "Real-time gold price tracking and forecasting API with Prophet integration, OpenAPI validation, and comprehensive monitoring",
+    "contact": {
+      "name": "GoldVision Team",
+      "email": "support@goldvision.com"
+    },
+    "license": {
+      "name": "MIT",
+      "url": "https://opensource.org/licenses/MIT"
+    }
+  },
+  "servers": [
+    {
+      "url": "http://localhost:8000",
+      "description": "Development server"
+    },
+    {
+      "url": "https://api.goldvision.com",
+      "description": "Production server"
+    }
+  ],
+  "paths": {
+    "/health": {
+      "get": {
+        "summary": "Health check",
+        "description": "Check if the service is running and get basic system information",
+        "tags": ["System"],
+        "responses": {
+          "200": {
+            "description": "Service is healthy",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/metrics": {
+      "get": {
+        "summary": "Prometheus metrics",
+        "description": "Get Prometheus metrics for monitoring and observability",
+        "tags": ["Monitoring"],
+        "responses": {
+          "200": {
+            "description": "Metrics in Prometheus format",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/openapi.json": {
+      "get": {
+        "summary": "OpenAPI specification",
+        "description": "Get the OpenAPI specification for this API",
+        "tags": ["Documentation"],
+        "responses": {
+          "200": {
+            "description": "OpenAPI specification",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/docs": {
+      "get": {
+        "summary": "API documentation",
+        "description": "Interactive API documentation using Swagger UI",
+        "tags": ["Documentation"],
+        "responses": {
+          "200": {
+            "description": "Swagger UI interface",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/login": {
+      "post": {
+        "summary": "User login",
+        "description": "Authenticate user and receive access and refresh tokens",
+        "tags": ["Authentication"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Login successful",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LoginResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many login attempts",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RateLimitResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/me": {
+      "get": {
+        "summary": "Get current user",
+        "description": "Get information about the currently authenticated user",
+        "tags": ["Authentication"],
+        "responses": {
+          "200": {
+            "description": "User information",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "User not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/refresh": {
+      "post": {
+        "summary": "Refresh access token",
+        "description": "Refresh the access token using a valid refresh token",
+        "tags": ["Authentication"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RefreshRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Token refreshed successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RefreshResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid refresh token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/prices": {
+      "get": {
+        "summary": "Get gold prices",
+        "description": "Retrieve historical gold price data with optional filtering and pagination",
+        "tags": ["Prices"],
+        "parameters": [
+          {
+            "name": "from",
+            "in": "query",
+            "description": "Start date for price data (YYYY-MM-DD)",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "description": "End date for price data (YYYY-MM-DD)",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Maximum number of prices to return",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 1000,
+              "default": 100
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "description": "Cursor for pagination",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Price data retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PricesResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid query parameters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/prices/ingest": {
+      "post": {
+        "summary": "Ingest price data",
+        "description": "Ingest new gold price data with validation and deduplication",
+        "tags": ["Prices"],
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PriceIngestRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Prices ingested successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PriceIngestResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid data format or validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/forecast": {
+      "post": {
+        "summary": "Generate price forecast",
+        "description": "Generate gold price forecast using Prophet AI with circuit breaker protection",
+        "tags": ["Forecasting"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ForecastRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Forecast generated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForecastResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Insufficient data or invalid parameters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Forecast generation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/components": {
+      "post": {
+        "summary": "Decompose components (trend, weekly, yearly, holidays)",
+        "description": "Fetch last 365 days and forward to Prophet components API.",
+        "tags": ["Explainability"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ComponentsGatewayRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Components returned",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ComponentsGatewayResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid parameters",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          },
+          "500": {
+            "description": "Component decomposition failed",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/stream/prices": {
+      "get": {
+        "summary": "Server-Sent Events: live prices",
+        "description": "Stream live price ticks for asset/currency via SSE.",
+        "tags": ["Streaming"],
+        "parameters": [
+          {
+            "name": "asset",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": ["XAU", "XAG", "XPT"],
+              "default": "XAU"
+            }
+          },
+          {
+            "name": "currency",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": ["USD", "EUR", "SAR"],
+              "default": "USD"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "SSE stream of tick events (text/event-stream)"
+          },
+          "400": {
+            "description": "Invalid parameters",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/provider/status": {
+      "get": {
+        "summary": "Get provider status",
+        "description": "Get current status of the data provider including health and metrics",
+        "tags": ["Provider"],
+        "responses": {
+          "200": {
+            "description": "Provider status retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProviderStatus"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/data-source": {
+      "get": {
+        "summary": "Get data source information",
+        "description": "Get detailed information about the data source (admin only)",
+        "tags": ["Admin"],
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Data source information retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DataSourceInfo"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Admin access required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/metrics": {
+      "get": {
+        "summary": "Get system metrics",
+        "description": "Get detailed system metrics and performance data (admin only)",
+        "tags": ["Admin"],
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Metrics retrieved successfully",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Admin access required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/scheduler": {
+      "get": {
+        "summary": "Get scheduler status",
+        "description": "Get information about the automated scheduler (admin only)",
+        "tags": ["Admin"],
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Scheduler status retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SchedulerStatus"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Admin access required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/alerts": {
+      "get": {
+        "summary": "Get user alerts",
+        "description": "Get all alerts for the authenticated user",
+        "tags": ["Alerts"],
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Alerts retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlertsResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Create alert",
+        "description": "Create a new price alert for the authenticated user",
+        "tags": ["Alerts"],
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateAlertRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Alert created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Alert"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid alert data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/artifacts/latest": {
+      "get": {
+        "summary": "Download evidence pack",
+        "description": "Download the latest evidence pack as a ZIP file",
+        "tags": ["Admin"],
+        "responses": {
+          "200": {
+            "description": "Evidence pack downloaded successfully",
+            "content": {
+              "application/zip": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No artifacts found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/simulate": {
+      "post": {
+        "summary": "Run Monte Carlo simulation",
+        "description": "Run Monte Carlo simulation for risk analysis with VaR and CVaR calculations",
+        "tags": ["Simulation"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SimulationRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Simulation completed successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SimulationResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid simulation parameters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Simulation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    },
+    "schemas": {
+      "ComponentTrend": {
+        "type": "object",
+        "properties": {
+          "ds": { "type": "string", "format": "date" },
+          "value": { "type": "number" }
+        },
+        "required": ["ds", "value"]
+      },
+      "ComponentWeekly": {
+        "type": "object",
+        "properties": {
+          "dow": { "type": "integer", "minimum": 0, "maximum": 6 },
+          "label": { "type": "string" },
+          "value": { "type": "number" }
+        },
+        "required": ["dow", "label", "value"]
+      },
+      "ComponentYearly": {
+        "type": "object",
+        "properties": {
+          "doy": { "type": "integer", "minimum": 1, "maximum": 366 },
+          "ds": { "type": "string", "format": "date" },
+          "value": { "type": "number" }
+        },
+        "required": ["doy", "ds", "value"]
+      },
+      "ComponentHoliday": {
+        "type": "object",
+        "properties": {
+          "ds": { "type": "string", "format": "date" },
+          "name": { "type": "string" },
+          "value": { "type": "number" }
+        },
+        "required": ["ds", "name", "value"]
+      },
+      "ComponentsGatewayRequest": {
+        "type": "object",
+        "properties": {
+          "asset": {
+            "type": "string",
+            "enum": ["XAU", "XAG", "XPT"],
+            "default": "XAU"
+          },
+          "currency": {
+            "type": "string",
+            "enum": ["USD", "EUR", "SAR"],
+            "default": "USD"
+          },
+          "options": {
+            "type": "object",
+            "properties": {
+              "yearly_seasonality": { "type": "boolean" },
+              "weekly_seasonality": { "type": "boolean" },
+              "holidays": { "type": "boolean" },
+              "seasonality_mode": {
+                "type": "string",
+                "enum": ["additive", "multiplicative"]
+              }
+            }
+          }
+        },
+        "required": ["asset", "currency"]
+      },
+      "ComponentsGatewayResponse": {
+        "type": "object",
+        "properties": {
+          "asset": { "type": "string" },
+          "currency": { "type": "string" },
+          "trend": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/ComponentTrend" }
+          },
+          "weekly": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/ComponentWeekly" }
+          },
+          "yearly": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/ComponentYearly" }
+          },
+          "holidays": {
+            "type": "array",
+            "nullable": true,
+            "items": { "$ref": "#/components/schemas/ComponentHoliday" }
+          },
+          "seasonality_mode": {
+            "type": "string",
+            "enum": ["additive", "multiplicative"]
+          },
+          "generated_at": { "type": "string", "format": "date-time" }
+        },
+        "required": [
+          "asset",
+          "currency",
+          "trend",
+          "weekly",
+          "yearly",
+          "seasonality_mode",
+          "generated_at"
+        ]
+      },
+      "HealthResponse": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "example": "ok"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "uptime_seconds": {
+            "type": "number"
+          },
+          "version": {
+            "type": "string"
+          },
+          "prophet_healthy": {
+            "type": "boolean"
+          }
+        },
+        "required": ["status", "timestamp", "uptime_seconds", "version"]
+      },
+      "LoginRequest": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "password": {
+            "type": "string",
+            "minLength": 6
+          }
+        },
+        "required": ["email", "password"]
+      },
+      "LoginResponse": {
+        "type": "object",
+        "properties": {
+          "access_token": {
+            "type": "string"
+          },
+          "refresh_token": {
+            "type": "string"
+          },
+          "user": {
+            "$ref": "#/components/schemas/User"
+          }
+        },
+        "required": ["access_token", "refresh_token", "user"]
+      },
+      "RefreshRequest": {
+        "type": "object",
+        "properties": {
+          "refresh_token": {
+            "type": "string"
+          }
+        },
+        "required": ["refresh_token"]
+      },
+      "RefreshResponse": {
+        "type": "object",
+        "properties": {
+          "access_token": {
+            "type": "string"
+          },
+          "refresh_token": {
+            "type": "string"
+          }
+        },
+        "required": ["access_token", "refresh_token"]
+      },
+      "User": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "role": {
+            "type": "string",
+            "enum": ["user", "admin"]
+          },
+          "locale": {
+            "type": "string",
+            "enum": ["en", "ar"]
+          }
+        },
+        "required": ["id", "email", "role", "locale"]
+      },
+      "PriceData": {
+        "type": "object",
+        "properties": {
+          "ds": {
+            "type": "string",
+            "format": "date"
+          },
+          "price": {
+            "type": "number",
+            "minimum": 0
+          },
+          "asset": {
+            "type": "string",
+            "enum": ["XAU", "XAG", "XPT"],
+            "description": "Asset type (Gold, Silver, Platinum)"
+          },
+          "currency": {
+            "type": "string",
+            "enum": ["USD", "EUR", "SAR"],
+            "description": "Currency code"
+          }
+        },
+        "required": ["ds", "price", "asset", "currency"]
+      },
+      "PricesResponse": {
+        "type": "object",
+        "properties": {
+          "prices": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PriceData"
+            }
+          },
+          "count": {
+            "type": "integer"
+          },
+          "total_count": {
+            "type": "integer"
+          },
+          "next_cursor": {
+            "type": "integer",
+            "nullable": true
+          }
+        },
+        "required": ["prices", "count", "total_count"]
+      },
+      "PriceIngestRequest": {
+        "type": "object",
+        "properties": {
+          "rows": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PriceData"
+            },
+            "minItems": 1
+          }
+        },
+        "required": ["rows"]
+      },
+      "PriceIngestResponse": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "count": {
+            "type": "integer"
+          },
+          "ingested_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": ["message", "count", "ingested_at"]
+      },
+      "ForecastRequest": {
+        "type": "object",
+        "properties": {
+          "asset": {
+            "type": "string",
+            "enum": ["XAU", "XAG", "XPT"],
+            "default": "XAU",
+            "description": "Asset to forecast (Gold, Silver, Platinum)"
+          },
+          "currency": {
+            "type": "string",
+            "enum": ["USD", "EUR", "SAR"],
+            "default": "USD",
+            "description": "Currency for the forecast"
+          },
+          "horizon_days": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 365,
+            "default": 14
+          },
+          "include_history": {
+            "type": "boolean",
+            "default": false,
+            "description": "Include historical data in response"
+          }
+        }
+      },
+      "ForecastPoint": {
+        "type": "object",
+        "properties": {
+          "ds": {
+            "type": "string",
+            "format": "date"
+          },
+          "yhat": {
+            "type": "number"
+          },
+          "yhat_lower": {
+            "type": "number"
+          },
+          "yhat_upper": {
+            "type": "number"
+          }
+        },
+        "required": ["ds", "yhat", "yhat_lower", "yhat_upper"]
+      },
+      "ForecastResponse": {
+        "type": "object",
+        "properties": {
+          "generated_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "horizon_days": {
+            "type": "integer"
+          },
+          "asset": {
+            "type": "string",
+            "enum": ["XAU", "XAG", "XPT"],
+            "description": "Asset forecasted"
+          },
+          "currency": {
+            "type": "string",
+            "enum": ["USD", "EUR", "SAR"],
+            "description": "Currency used"
+          },
+          "forecast": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ForecastPoint"
+            }
+          },
+          "history": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PriceData"
+            },
+            "description": "Historical data (if requested)"
+          },
+          "model_version": {
+            "type": "string"
+          },
+          "training_window_days": {
+            "type": "integer"
+          },
+          "holidays_enabled": {
+            "type": "boolean"
+          },
+          "seasonality_flags": {
+            "type": "object"
+          },
+          "degraded": {
+            "type": "boolean",
+            "description": "True if forecast was generated using fallback method"
+          }
+        },
+        "required": [
+          "generated_at",
+          "horizon_days",
+          "asset",
+          "currency",
+          "forecast"
+        ]
+      },
+      "ProviderStatus": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": ["active", "inactive", "error"]
+          },
+          "last_fetch_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "last_price": {
+            "type": "object",
+            "nullable": true,
+            "properties": {
+              "ds": {
+                "type": "string",
+                "format": "date"
+              },
+              "price": {
+                "type": "number"
+              }
+            }
+          },
+          "retries_last_run": {
+            "type": "integer"
+          },
+          "fallback_used_last_run": {
+            "type": "boolean"
+          },
+          "scheduler_interval_min": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "status",
+          "retries_last_run",
+          "fallback_used_last_run",
+          "scheduler_interval_min"
+        ]
+      },
+      "DataSourceInfo": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string"
+          },
+          "last_fetch_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "last_price": {
+            "type": "object",
+            "nullable": true,
+            "properties": {
+              "ds": {
+                "type": "string",
+                "format": "date"
+              },
+              "price": {
+                "type": "number"
+              }
+            }
+          },
+          "retries_last_run": {
+            "type": "integer"
+          },
+          "fallback_used_last_run": {
+            "type": "boolean"
+          }
+        },
+        "required": ["status", "retries_last_run", "fallback_used_last_run"]
+      },
+      "SchedulerStatus": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": ["running", "stopped", "error"]
+          },
+          "interval_minutes": {
+            "type": "integer"
+          },
+          "next_run": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "tasks": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "object",
+              "properties": {
+                "status": {
+                  "type": "string"
+                },
+                "last_run": {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                "next_run": {
+                  "type": "string",
+                  "format": "date-time"
+                }
+              }
+            }
+          }
+        },
+        "required": ["status", "interval_minutes", "next_run", "tasks"]
+      },
+      "Alert": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "asset": {
+            "type": "string",
+            "enum": ["XAU", "XAG", "XPT"],
+            "description": "Asset for the alert"
+          },
+          "currency": {
+            "type": "string",
+            "enum": ["USD", "EUR", "SAR"],
+            "description": "Currency for the alert"
+          },
+          "rule_type": {
+            "type": "string",
+            "enum": ["price_threshold", "price_change", "volume_threshold"]
+          },
+          "threshold": {
+            "type": "number"
+          },
+          "direction": {
+            "type": "string",
+            "enum": ["above", "below", "change_up", "change_down"]
+          },
+          "triggered_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "asset",
+          "currency",
+          "rule_type",
+          "threshold",
+          "direction",
+          "created_at"
+        ]
+      },
+      "CreateAlertRequest": {
+        "type": "object",
+        "properties": {
+          "asset": {
+            "type": "string",
+            "enum": ["XAU", "XAG", "XPT"],
+            "default": "XAU",
+            "description": "Asset for the alert"
+          },
+          "currency": {
+            "type": "string",
+            "enum": ["USD", "EUR", "SAR"],
+            "default": "USD",
+            "description": "Currency for the alert"
+          },
+          "rule_type": {
+            "type": "string",
+            "enum": ["price_above", "price_below"]
+          },
+          "threshold": {
+            "type": "number",
+            "minimum": 0
+          },
+          "direction": {
+            "type": "string",
+            "enum": ["above", "below"]
+          }
+        },
+        "required": ["rule_type", "threshold", "direction"]
+      },
+      "AlertsResponse": {
+        "type": "object",
+        "properties": {
+          "alerts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Alert"
+            }
+          },
+          "count": {
+            "type": "integer"
+          }
+        },
+        "required": ["alerts", "count"]
+      },
+      "SimulationRequest": {
+        "type": "object",
+        "properties": {
+          "asset": {
+            "type": "string",
+            "enum": ["XAU", "XAG", "XPT"],
+            "default": "XAU",
+            "description": "Asset to simulate (Gold, Silver, Platinum)"
+          },
+          "currency": {
+            "type": "string",
+            "enum": ["USD", "EUR", "SAR"],
+            "default": "USD",
+            "description": "Currency for the simulation"
+          },
+          "days": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 60,
+            "default": 30,
+            "description": "Number of days to simulate"
+          },
+          "method": {
+            "type": "string",
+            "enum": ["gbm", "bootstrap"],
+            "default": "gbm",
+            "description": "Simulation method (Geometric Brownian Motion or Bootstrap)"
+          },
+          "annual_vol": {
+            "type": "number",
+            "minimum": 10,
+            "maximum": 40,
+            "nullable": true,
+            "description": "Annual volatility percentage (GBM only)"
+          },
+          "drift_adj": {
+            "type": "number",
+            "minimum": -5,
+            "maximum": 5,
+            "nullable": true,
+            "description": "Annual drift adjustment percentage"
+          },
+          "n": {
+            "type": "integer",
+            "minimum": 1000,
+            "maximum": 100000,
+            "default": 10000,
+            "description": "Number of simulation paths"
+          }
+        },
+        "required": []
+      },
+      "SimulationPoint": {
+        "type": "object",
+        "properties": {
+          "ds": {
+            "type": "string",
+            "format": "date",
+            "description": "Date string in YYYY-MM-DD format"
+          },
+          "p01": {
+            "type": "number",
+            "description": "1st percentile"
+          },
+          "p05": {
+            "type": "number",
+            "description": "5th percentile"
+          },
+          "p10": {
+            "type": "number",
+            "description": "10th percentile"
+          },
+          "p50": {
+            "type": "number",
+            "description": "50th percentile (median)"
+          },
+          "p90": {
+            "type": "number",
+            "description": "90th percentile"
+          },
+          "p95": {
+            "type": "number",
+            "description": "95th percentile"
+          },
+          "p99": {
+            "type": "number",
+            "description": "99th percentile"
+          }
+        },
+        "required": ["ds", "p01", "p05", "p10", "p50", "p90", "p95", "p99"]
+      },
+      "SimulationResponse": {
+        "type": "object",
+        "properties": {
+          "method": {
+            "type": "string",
+            "description": "Simulation method used"
+          },
+          "days": {
+            "type": "integer",
+            "description": "Number of days simulated"
+          },
+          "n": {
+            "type": "integer",
+            "description": "Number of paths generated"
+          },
+          "seed": {
+            "type": "integer",
+            "description": "Random seed used"
+          },
+          "asset": {
+            "type": "string",
+            "description": "Asset simulated"
+          },
+          "currency": {
+            "type": "string",
+            "description": "Currency used"
+          },
+          "fan": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SimulationPoint"
+            },
+            "description": "Fan chart data with percentiles for each day"
+          },
+          "var95": {
+            "type": "number",
+            "description": "Value at Risk at 95% confidence level"
+          },
+          "cvar95": {
+            "type": "number",
+            "description": "Conditional Value at Risk at 95% confidence level"
+          }
+        },
+        "required": [
+          "method",
+          "days",
+          "n",
+          "seed",
+          "asset",
+          "currency",
+          "fan",
+          "var95",
+          "cvar95"
+        ]
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "format": "uri"
+          },
+          "title": {
+            "type": "string"
+          },
+          "status": {
+            "type": "integer"
+          },
+          "detail": {
+            "type": "string"
+          },
+          "instance": {
+            "type": "string"
+          },
+          "request_id": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": ["type", "title", "status", "detail", "instance"]
+      },
+      "RateLimitResponse": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "format": "uri"
+          },
+          "title": {
+            "type": "string"
+          },
+          "status": {
+            "type": "integer"
+          },
+          "detail": {
+            "type": "string"
+          },
+          "retry_after": {
+            "type": "integer"
+          }
+        },
+        "required": ["type", "title", "status", "detail", "retry_after"]
+      }
+    }
+  }
+}

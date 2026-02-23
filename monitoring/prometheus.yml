@@ -1,0 +1,37 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+rule_files:
+  - "monitoring/alerts.yaml"
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+            - alertmanager:9093
+
+scrape_configs:
+  - job_name: "goldvision-api"
+    static_configs:
+      - targets: ["localhost:8000"]
+    metrics_path: "/metrics"
+    scrape_interval: 5s
+
+  - job_name: "prophet-service"
+    static_configs:
+      - targets: ["localhost:8001"]
+    metrics_path: "/metrics"
+    scrape_interval: 5s
+
+  - job_name: "goldvision-readiness"
+    static_configs:
+      - targets: ["localhost:8000"]
+    metrics_path: "/readyz"
+    scrape_interval: 10s
+
+  - job_name: "goldvision-liveness"
+    static_configs:
+      - targets: ["localhost:8000"]
+    metrics_path: "/livez"
+    scrape_interval: 30s

@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Force Clear Service Workers</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+    }
+    .container {
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(20px);
+      border-radius: 20px;
+      padding: 3rem;
+      max-width: 600px;
+      text-align: center;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    }
+    h1 {
+      font-size: 2rem;
+      margin-bottom: 1rem;
+    }
+    .spinner {
+      width: 60px;
+      height: 60px;
+      margin: 2rem auto;
+      border: 6px solid rgba(255, 255, 255, 0.3);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    .status {
+      font-size: 1.1rem;
+      margin: 1.5rem 0;
+      min-height: 2rem;
+    }
+    .log {
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: 10px;
+      padding: 1rem;
+      margin-top: 1.5rem;
+      max-height: 200px;
+      overflow-y: auto;
+      text-align: left;
+      font-family: monospace;
+      font-size: 0.9rem;
+    }
+    .log-entry {
+      margin: 0.5rem 0;
+    }
+    .success { color: #4ade80; }
+    .error { color: #f87171; }
+    .info { color: #60a5fa; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🔧 Fixing Service Worker Issue</h1>
+    <div class="spinner" id="spinner"></div>
+    <div class="status" id="status">Starting cleanup...</div>
+    <div class="log" id="log"></div>
+  </div>
+
+  <script>
+    const statusEl = document.getElementById('status');
+    const logEl = document.getElementById('log');
+    const spinnerEl = document.getElementById('spinner');
+
+    function log(message, type = 'info') {
+      const entry = document.createElement('div');
+      entry.className = `log-entry ${type}`;
+      entry.textContent = `${new Date().toLocaleTimeString()} - ${message}`;
+      logEl.appendChild(entry);
+      logEl.scrollTop = logEl.scrollHeight;
+    }
+
+    function setStatus(message) {
+      statusEl.textContent = message;
+    }
+
+    async function forceCleanup() {
+      try {
+        log('🚀 Starting aggressive cleanup...', 'info');
+        setStatus('Unregistering service workers...');
+
+        // Step 1: Unregister ALL service workers
+        if ('serviceWorker' in navigator) {
+          const registrations = await navigator.serviceWorker.getRegistrations();
+          log(`Found ${registrations.length} service worker(s)`, 'info');
+          
+          for (let i = 0; i < registrations.length; i++) {
+            const reg = registrations[i];
+            log(`Unregistering: ${reg.scope}`, 'info');
+            await reg.unregister();
+            log(`✅ Unregistered ${i + 1}/${registrations.length}`, 'success');
+          }
+        }
+
+        // Step 2: Clear ALL caches
+        setStatus('Clearing all caches...');
+        if ('caches' in window) {
+          const cacheNames = await caches.keys();
+          log(`Found ${cacheNames.length} cache(s)`, 'info');
+          
+          for (const cacheName of cacheNames) {
+            log(`Deleting cache: ${cacheName}`, 'info');
+            await caches.delete(cacheName);
+          }
+          log(`✅ All ${cacheNames.length} caches cleared`, 'success');
+        }
+
+        // Step 3: Clear localStorage (except auth tokens)
+        setStatus('Clearing storage...');
+        const accessToken = localStorage.getItem('access_token');
+        const refreshToken = localStorage.getItem('refresh_token');
+        
+        localStorage.clear();
+        sessionStorage.clear();
+        
+        if (accessToken) localStorage.setItem('access_token', accessToken);
+        if (refreshToken) localStorage.setItem('refresh_token', refreshToken);
+        log('✅ Storage cleared (auth preserved)', 'success');
+
+        // Step 4: Force reload without cache
+        setStatus('✅ All clear! Reloading...');
+        spinnerEl.style.display = 'none';
+        log('🎉 Cleanup complete! Reloading in 2 seconds...', 'success');
+        
+        setTimeout(() => {
+          // Force hard reload without cache
+          window.location.href = '/admin?_nocache=' + Date.now();
+        }, 2000);
+
+      } catch (error) {
+        log(`❌ Error: ${error.message}`, 'error');
+        setStatus('❌ Cleanup failed!');
+        spinnerEl.style.display = 'none';
+        console.error(error);
+      }
+    }
+
+    // Start immediately
+    forceCleanup();
+  </script>
+</body>
+</html>
+

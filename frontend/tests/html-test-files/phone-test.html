@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>📱 Phone Connection Test</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      margin: 0;
+      padding: 20px;
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      color: white;
+      min-height: 100vh;
+    }
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      border-radius: 20px;
+      padding: 2rem;
+    }
+    h1 { margin-bottom: 1rem; }
+    .status {
+      background: rgba(0, 0, 0, 0.2);
+      padding: 1rem;
+      border-radius: 10px;
+      margin: 1rem 0;
+      font-family: monospace;
+      font-size: 0.9rem;
+    }
+    .success { color: #4ade80; }
+    .error { color: #f87171; }
+    button {
+      background: white;
+      color: #059669;
+      border: none;
+      padding: 1rem 2rem;
+      border-radius: 10px;
+      font-size: 1rem;
+      font-weight: bold;
+      cursor: pointer;
+      width: 100%;
+      margin-top: 1rem;
+    }
+    .big { font-size: 2rem; text-align: center; margin: 2rem 0; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>📱 GoldVision Phone Connection Test</h1>
+    <div class="big">✅ SUCCESS!</div>
+    <p>If you can see this page, your phone CAN connect to your computer!</p>
+    
+    <div class="status" id="info"></div>
+    
+    <button onclick="testBackend()">Test Backend Connection</button>
+    
+    <div class="status" id="result"></div>
+  </div>
+
+  <script>
+    const infoEl = document.getElementById('info');
+    const resultEl = document.getElementById('result');
+
+    // Show connection info
+    infoEl.innerHTML = `
+<strong>Connection Info:</strong>
+URL: ${window.location.href}
+Hostname: ${window.location.hostname}
+Port: ${window.location.port}
+Protocol: ${window.location.protocol}
+
+<strong>Your Device:</strong>
+${navigator.userAgent.includes('Mobile') ? '📱 Mobile Device' : '🖥️ Desktop'}
+User Agent: ${navigator.userAgent.substring(0, 50)}...
+    `;
+
+    async function testBackend() {
+      resultEl.innerHTML = '<p>Testing backend...</p>';
+      
+      try {
+        const res = await fetch('/api/health');
+        const data = await res.json();
+        
+        resultEl.innerHTML = `
+<p class="success">✅ Backend Working!</p>
+Status: ${data.status}
+Uptime: ${Math.floor(data.uptime_seconds / 60)} minutes
+
+<p class="success">✅ FULL CONNECTION WORKING!</p>
+<p>You can now use GoldVision on your phone!</p>
+
+<a href="/admin" style="color: white; text-decoration: underline;">
+  → Go to GoldVision Admin
+</a>
+        `;
+      } catch (error) {
+        resultEl.innerHTML = `
+<p class="error">❌ Backend Not Accessible</p>
+Error: ${error.message}
+
+<p>Frontend works, but backend (port 8000) might be blocked.</p>
+        `;
+      }
+    }
+  </script>
+</body>
+</html>

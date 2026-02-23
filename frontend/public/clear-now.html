@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="refresh" content="0; url=/login">
+    <title>Clearing Authentication</title>
+</head>
+<body>
+    <script>
+        // Immediate execution - clear everything
+        (function() {
+            try {
+                // Clear localStorage
+                localStorage.clear();
+                
+                // Clear sessionStorage
+                sessionStorage.clear();
+                
+                // Clear all cookies
+                document.cookie.split(";").forEach(function(c) { 
+                    document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/"); 
+                });
+                
+                // Force reload and redirect
+                setTimeout(function() {
+                    window.location.replace('/login');
+                }, 100);
+                
+            } catch(e) {
+                console.error('Clear error:', e);
+                window.location.replace('/login');
+            }
+        })();
+    </script>
+    <h1 style="font-family: Arial; text-align: center; padding: 50px;">Clearing authentication... Redirecting to login...</h1>
+</body>
+</html>
+

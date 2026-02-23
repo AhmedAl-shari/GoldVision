@@ -1,0 +1,66 @@
+# Dependencies (should be installed in container, not copied)
+node_modules
+frontend/node_modules
+venv
+__pycache__
+*.pyc
+.pytest_cache
+
+# Git
+.git
+.gitignore
+
+# Logs and runtime files
+logs
+*.log
+pids
+*.pid
+
+# Database files (use volumes instead)
+*.db
+*.db-journal
+prisma/dev.db
+
+# Build artifacts
+dist
+build
+.next
+out
+.vercel
+
+# Environment files (use env_file in docker-compose)
+.env
+.env.local
+.env.*.local
+env/dev.env
+
+# IDE and OS files
+.DS_Store
+.vscode
+.idea
+*.swp
+*.swo
+*~
+
+# Test artifacts
+coverage
+.nyc_output
+artifacts
+
+# Temporary files
+tmp
+temp
+*.tmp
+*.bak
+*.backup
+
+# Archives
+*.zip
+*.tar
+*.tar.gz
+
+# Docker files (don't copy into themselves)
+Dockerfile*
+docker-compose*.yaml
+.dockerignore
+

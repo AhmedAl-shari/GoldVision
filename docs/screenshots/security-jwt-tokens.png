@@ -1,0 +1,10 @@
+# Security JWT Tokens Screenshot
+
+This file should contain a screenshot showing JWT token security implementation.
+
+To capture this screenshot:
+1. Open GoldVision and login
+2. Open Developer Tools → Application → Cookies
+3. Show JWT token in httpOnly cookie
+4. Demonstrate token refresh mechanism
+5. Save as security-jwt-tokens.png

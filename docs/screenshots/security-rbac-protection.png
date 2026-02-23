@@ -1,0 +1,10 @@
+# Security RBAC Protection Screenshot
+
+This file should contain a screenshot showing RBAC access control.
+
+To capture this screenshot:
+1. Login as regular user (not admin)
+2. Try to access admin-only features
+3. Show 403 error message
+3. Demonstrate role-based access control
+4. Save as security-rbac-protection.png

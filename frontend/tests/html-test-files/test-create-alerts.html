@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Test Create AI Alerts</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      max-width: 800px;
+      margin: 50px auto;
+      padding: 40px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+    }
+    .container {
+      background: white;
+      border-radius: 20px;
+      padding: 40px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    }
+    h1 { color: #667eea; margin-top: 0; }
+    button {
+      width: 100%;
+      padding: 15px;
+      background: #667eea;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      margin: 10px 0;
+    }
+    button:hover { background: #5568d3; }
+    button:disabled { background: #ccc; cursor: not-allowed; }
+    .log {
+      background: #f5f5f5;
+      padding: 20px;
+      border-radius: 10px;
+      margin: 20px 0;
+      font-family: monospace;
+      font-size: 12px;
+      max-height: 400px;
+      overflow-y: auto;
+    }
+    .success { color: #4caf50; }
+    .error { color: #f44336; }
+    .info { color: #2196f3; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🧪 Test Create AI Alerts</h1>
+    <p>This page tests the CSRF token flow for creating AI-recommended alerts</p>
+
+    <button onclick="testCreateAlerts()" id="testBtn">
+      🚀 Test: Create Top 3 Alerts
+    </button>
+
+    <button onclick="clearAndRetry()">
+      🔄 Clear Cache & Retry
+    </button>
+
+    <button onclick="window.location.href='/alerts'">
+      ← Back to Alerts Page
+    </button>
+
+    <div class="log" id="log"></div>
+  </div>
+
+  <script>
+    const log = (msg, type = 'info') => {
+      const logDiv = document.getElementById('log');
+      const time = new Date().toLocaleTimeString();
+      const className = type === 'success' ? 'success' : type === 'error' ? 'error' : 'info';
+      logDiv.innerHTML = `<div class="${className}">[${time}] ${msg}</div>` + logDiv.innerHTML;
+    };
+
+    async function clearAndRetry() {
+      log('Clearing cache...', 'info');
+      localStorage.removeItem('csrf_token');
+      sessionStorage.removeItem('session_id');
+      log('✅ Cache cleared', 'success');
+      log('You can now retry the test', 'info');
+    }
+
+    async function testCreateAlerts() {
+      const btn = document.getElementById('testBtn');
+      btn.disabled = true;
+      log('═══════════════════════════════════════', 'info');
+      log('Starting CSRF flow test...', 'info');
+
+      try {
+        // Step 1: Get or create session ID
+        let sessionId = sessionStorage.getItem('session_id');
+        if (!sessionId) {
+          sessionId = `session-${Date.now()}-${Math.random().toString(36).substring(7)}`;
+          sessionStorage.setItem('session_id', sessionId);
+          log(`✅ Created session ID: ${sessionId}`, 'success');
+        } else {
+          log(`✅ Using existing session ID: ${sessionId}`, 'info');
+        }
+
+        // Step 2: Fetch CSRF token WITH session ID
+        log('Fetching CSRF token with session ID...', 'info');
+        const csrfRes = await fetch('http://localhost:8000/csrf', {
+          headers: {
+            'x-session-id': sessionId
+          }
+        });
+        
+        if (!csrfRes.ok) {
+          throw new Error(`CSRF fetch failed: ${csrfRes.status}`);
+        }
+
+        const csrfData = await csrfRes.json();
+        const csrfToken = csrfData.csrf_token;
+        
+        if (!csrfToken) {
+          throw new Error('No csrf_token in response!');
+        }
+
+        localStorage.setItem('csrf_token', csrfToken);
+        log(`✅ Got CSRF token: ${csrfToken.substring(0, 8)}...`, 'success');
+
+        // Step 3: Get auth token
+        const authToken = localStorage.getItem('access_token');
+        if (!authToken) {
+          throw new Error('No access_token found! Please log in first.');
+        }
+        log(`✅ Got auth token: ${authToken.substring(0, 8)}...`, 'success');
+
+        // Step 4: Create alerts with SAME session ID
+        log('Creating alerts with matching session ID...', 'info');
+        const response = await fetch('http://localhost:8000/ai/alerts/create-recommended', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${authToken}`,
+            'x-csrf-token': csrfToken,
+            'x-session-id': sessionId // SAME session ID!
+          },
+          body: JSON.stringify({ maxAlerts: 3 })
+        });
+
+        const result = await response.json();
+        
+        if (!response.ok) {
+          throw new Error(`Request failed (${response.status}): ${result.error || result.detail || 'Unknown error'}`);
+        }
+
+        log(`✅ SUCCESS! Created ${result.created} alerts!`, 'success');
+        log(`Response: ${JSON.stringify(result, null, 2)}`, 'success');
+        log('═══════════════════════════════════════', 'info');
+        alert(`✅ Success! Created ${result.created} AI-recommended alerts!\n\nGo to Alerts page to see them.`);
+
+      } catch (error) {
+        log(`❌ ERROR: ${error.message}`, 'error');
+        log(`Stack: ${error.stack}`, 'error');
+        log('═══════════════════════════════════════', 'info');
+        alert(`❌ Failed: ${error.message}\n\nCheck the log for details.`);
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    log('Page loaded. Click "Test: Create Top 3 Alerts" to begin.', 'info');
+  </script>
+</body>
+</html>
+

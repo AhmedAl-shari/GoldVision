@@ -1,0 +1,482 @@
+{
+  "info": {
+    "name": "GoldVision API",
+    "description": "Gold price forecasting and alerting API",
+    "version": "1.0.0",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{auth_token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8000",
+      "type": "string"
+    },
+    {
+      "key": "auth_token",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"demo@goldvision.com\",\n  \"password\": \"demo123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "login"]
+            },
+            "description": "Login to get authentication token"
+          },
+          "response": []
+        },
+        {
+          "name": "Signup",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"newuser@example.com\",\n  \"password\": \"password123\",\n  \"locale\": \"en\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/signup",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "signup"]
+            },
+            "description": "Create a new user account"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/health",
+              "host": ["{{base_url}}"],
+              "path": ["health"]
+            },
+            "description": "Check API health status"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Prices",
+      "item": [
+        {
+          "name": "Get Prices",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/prices?limit=30",
+              "host": ["{{base_url}}"],
+              "path": ["prices"],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "30"
+                }
+              ]
+            },
+            "description": "Get recent gold prices"
+          },
+          "response": []
+        },
+        {
+          "name": "Ingest Prices (Admin Only)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"rows\": [\n    {\n      \"ds\": \"2025-01-20\",\n      \"price\": 2050.50\n    },\n    {\n      \"ds\": \"2025-01-21\",\n      \"price\": 2055.75\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/prices/ingest",
+              "host": ["{{base_url}}"],
+              "path": ["prices", "ingest"]
+            },
+            "description": "Ingest price data (admin only)"
+          },
+          "response": []
+        },
+        {
+          "name": "Fetch Latest Price (Admin Only)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/fetch-latest",
+              "host": ["{{base_url}}"],
+              "path": ["fetch-latest"]
+            },
+            "description": "Fetch and store latest price (admin only)"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Forecast",
+      "item": [
+        {
+          "name": "Generate Forecast",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"horizon_days\": 14\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/forecast",
+              "host": ["{{base_url}}"],
+              "path": ["forecast"]
+            },
+            "description": "Generate price forecast"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Backtest",
+      "item": [
+        {
+          "name": "Run Backtest",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/backtest?horizon=14&step=7&min_train=60",
+              "host": ["{{base_url}}"],
+              "path": ["backtest"],
+              "query": [
+                {
+                  "key": "horizon",
+                  "value": "14"
+                },
+                {
+                  "key": "step",
+                  "value": "7"
+                },
+                {
+                  "key": "min_train",
+                  "value": "60"
+                }
+              ]
+            },
+            "description": "Run backtest analysis"
+          },
+          "response": []
+        },
+        {
+          "name": "Download Backtest CSV",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/backtest/download",
+              "host": ["{{base_url}}"],
+              "path": ["backtest", "download"]
+            },
+            "description": "Download backtest results as CSV"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Alerts",
+      "item": [
+        {
+          "name": "Get My Alerts",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/alerts",
+              "host": ["{{base_url}}"],
+              "path": ["alerts"]
+            },
+            "description": "Get alerts for current user"
+          },
+          "response": []
+        },
+        {
+          "name": "Create Alert",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"rule_type\": \"price_above\",\n  \"threshold\": 2000.0,\n  \"direction\": \"above\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/alerts",
+              "host": ["{{base_url}}"],
+              "path": ["alerts"]
+            },
+            "description": "Create a new price alert"
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Alert",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/alerts/1",
+              "host": ["{{base_url}}"],
+              "path": ["alerts", "1"]
+            },
+            "description": "Delete an alert (by ID)"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Admin",
+      "item": [
+        {
+          "name": "Data Source Status",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/admin/data-source",
+              "host": ["{{base_url}}"],
+              "path": ["admin", "data-source"]
+            },
+            "description": "Get data source status (admin only)"
+          },
+          "response": []
+        },
+        {
+          "name": "Metrics Snapshot",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/admin/metrics",
+              "host": ["{{base_url}}"],
+              "path": ["admin", "metrics"]
+            },
+            "description": "Get metrics snapshot (admin only)"
+          },
+          "response": []
+        },
+        {
+          "name": "Scheduler Status",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/admin/scheduler",
+              "host": ["{{base_url}}"],
+              "path": ["admin", "scheduler"]
+            },
+            "description": "Get scheduler status (admin only)"
+          },
+          "response": []
+        },
+        {
+          "name": "Email Status",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/notifications/status",
+              "host": ["{{base_url}}"],
+              "path": ["notifications", "status"]
+            },
+            "description": "Get email service status (admin only)"
+          },
+          "response": []
+        },
+        {
+          "name": "Send Test Email",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/notifications/test",
+              "host": ["{{base_url}}"],
+              "path": ["notifications", "test"]
+            },
+            "description": "Send test email (admin only)"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Metrics",
+      "item": [
+        {
+          "name": "Get Metrics",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/metrics",
+              "host": ["{{base_url}}"],
+              "path": ["metrics"]
+            },
+            "description": "Get Prometheus metrics"
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

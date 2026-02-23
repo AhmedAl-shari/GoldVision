@@ -1,0 +1,10 @@
+# Accessibility Contrast Test Screenshot
+
+This file should contain a screenshot showing color contrast testing results.
+
+To capture this screenshot:
+1. Open GoldVision in Chrome
+2. Open Developer Tools → Lighthouse
+3. Run accessibility audit
+4. Take screenshot of contrast results
+5. Save as accessibility-contrast-test.png

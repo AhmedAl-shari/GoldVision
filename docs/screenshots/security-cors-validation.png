@@ -1,0 +1,10 @@
+# Security CORS Validation Screenshot
+
+This file should contain a screenshot showing CORS security implementation.
+
+To capture this screenshot:
+1. Open Developer Tools → Network
+2. Make request from allowed origin
+3. Show CORS headers in response
+4. Demonstrate origin validation
+5. Save as security-cors-validation.png

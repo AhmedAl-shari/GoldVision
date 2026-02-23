@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Clearing Service Workers...</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+    }
+    .container {
+      text-align: center;
+      padding: 2rem;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 1rem;
+      backdrop-filter: blur(10px);
+    }
+    .spinner {
+      width: 50px;
+      height: 50px;
+      margin: 20px auto;
+      border: 5px solid rgba(255, 255, 255, 0.3);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🔄 Clearing Service Workers...</h1>
+    <div class="spinner"></div>
+    <p id="status">Unregistering...</p>
+  </div>
+  <script>
+    const status = document.getElementById('status');
+    
+    async function clearEverything() {
+      let count = 0;
+      
+      // Unregister all service workers
+      if ('serviceWorker' in navigator) {
+        const registrations = await navigator.serviceWorker.getRegistrations();
+        status.textContent = `Found ${registrations.length} service worker(s)`;
+        
+        for (const registration of registrations) {
+          await registration.unregister();
+          count++;
+          status.textContent = `Unregistered ${count}/${registrations.length}`;
+        }
+      }
+      
+      // Clear all caches
+      if ('caches' in window) {
+        const cacheNames = await caches.keys();
+        status.textContent = `Clearing ${cacheNames.length} cache(s)`;
+        
+        for (const cacheName of cacheNames) {
+          await caches.delete(cacheName);
+        }
+      }
+      
+      // Clear localStorage (except auth)
+      const accessToken = localStorage.getItem('access_token');
+      const refreshToken = localStorage.getItem('refresh_token');
+      localStorage.clear();
+      if (accessToken) localStorage.setItem('access_token', accessToken);
+      if (refreshToken) localStorage.setItem('refresh_token', refreshToken);
+      
+      status.textContent = '✅ All clear! Redirecting...';
+      
+      setTimeout(() => {
+        window.location.href = '/admin';
+      }, 1500);
+    }
+    
+    clearEverything().catch(err => {
+      status.textContent = '❌ Error: ' + err.message;
+    });
+  </script>
+</body>
+</html>

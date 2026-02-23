@@ -1,0 +1,34 @@
+{
+  // Updated: 2025-10-06 - Fixed include paths to match actual project structure
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "commonjs",
+    "lib": ["ES2020"],
+    "outDir": "./dist",
+    "rootDir": "./",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "moduleResolution": "node",
+    "allowSyntheticDefaultImports": true,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "types": ["node"]
+  },
+  "include": [
+    "services/**/*.ts",
+    "services/**/*.js",
+    "src/**/*.ts",
+    "src/**/*.js",
+    "scripts/**/*.ts",
+    "scripts/**/*.js",
+    "tests/**/*.ts",
+    "tests/**/*.js"
+  ],
+  "exclude": ["node_modules", "dist", "frontend", "artifacts", "venv"]
+}

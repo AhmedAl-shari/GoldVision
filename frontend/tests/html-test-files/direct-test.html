@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Direct WhatsApp Test</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      padding: 2rem;
+      background: #1a1a1a;
+      color: white;
+    }
+    button {
+      background: #25D366;
+      color: white;
+      border: none;
+      padding: 1rem 2rem;
+      font-size: 1.2rem;
+      cursor: pointer;
+      border-radius: 8px;
+    }
+    #log {
+      margin-top: 2rem;
+      background: #2a2a2a;
+      padding: 1rem;
+      border-radius: 8px;
+      font-family: monospace;
+      white-space: pre-wrap;
+    }
+  </style>
+</head>
+<body>
+  <h1>🧪 Direct WhatsApp Test (No React, No Service Workers)</h1>
+  <p>This bypasses ALL frontend code and directly calls the backend.</p>
+  
+  <button onclick="sendTest()">📱 Send WhatsApp Test NOW</button>
+  
+  <div id="log"></div>
+
+  <script>
+    const log = document.getElementById('log');
+    
+    function addLog(msg) {
+      log.textContent += new Date().toLocaleTimeString() + ' - ' + msg + '\n';
+      console.log(msg);
+    }
+
+    async function sendTest() {
+      try {
+        addLog('🚀 Starting direct test...');
+        
+        // Step 1: Login
+        addLog('1️⃣ Logging in...');
+        const loginRes = await fetch('http://127.0.0.1:8000/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email: 'demo@goldvision.com',
+            password: 'demo123'
+          })
+        });
+        
+        const loginData = await loginRes.json();
+        addLog('✅ Login response: ' + JSON.stringify(loginData).substring(0, 100));
+        
+        if (!loginData.access_token) {
+          addLog('❌ No token received!');
+          return;
+        }
+        
+        const token = loginData.access_token;
+        addLog('🔑 Token: ' + token.substring(0, 20) + '...');
+        
+        // Step 2: Send WhatsApp test
+        addLog('2️⃣ Sending WhatsApp test...');
+        const testRes = await fetch('http://127.0.0.1:8000/user/messaging-channels/test', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            whatsappNumber: '+967784095577',
+            telegramChatId: ''
+          })
+        });
+        
+        addLog('📥 Response status: ' + testRes.status);
+        const testData = await testRes.json();
+        addLog('✅ Response data: ' + JSON.stringify(testData, null, 2));
+        
+        if (testData.success) {
+          addLog('🎉 SUCCESS! Message ID: ' + testData.results?.whatsapp?.messageId);
+          addLog('📱 CHECK YOUR WHATSAPP NOW!');
+          alert('✅ Message sent! Check WhatsApp!');
+        } else {
+          addLog('❌ Failed: ' + testData.message);
+        }
+        
+      } catch (error) {
+        addLog('💥 Error: ' + error.message);
+        console.error(error);
+      }
+    }
+    
+    addLog('✅ Page loaded. Click button to test!');
+  </script>
+</body>
+</html>

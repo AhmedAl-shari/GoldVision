@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Connection Test</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 600px;
+      margin: 50px auto;
+      padding: 20px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      text-align: center;
+    }
+    .box {
+      background: rgba(255, 255, 255, 0.1);
+      padding: 30px;
+      border-radius: 15px;
+      backdrop-filter: blur(10px);
+    }
+    h1 { margin: 0 0 20px 0; font-size: 2.5em; }
+    .success { color: #4f4; font-size: 1.5em; margin: 20px 0; }
+    button {
+      background: #4f4;
+      color: #000;
+      border: none;
+      padding: 15px 30px;
+      font-size: 18px;
+      border-radius: 10px;
+      cursor: pointer;
+      margin: 10px;
+      font-weight: bold;
+    }
+    button:active { background: #3d3; }
+    .info { font-size: 14px; margin: 20px 0; opacity: 0.8; }
+    #result { margin: 20px 0; font-size: 18px; }
+  </style>
+</head>
+<body>
+  <div class="box">
+    <h1>✅ CONNECTION SUCCESSFUL!</h1>
+    <div class="success">🎉 Your phone can reach the server!</div>
+    
+    <p>If you can see this page, the connection is working.</p>
+    
+    <div class="info">
+      <strong>Server IP:</strong> 10.101.40.243<br>
+      <strong>Port:</strong> 5173<br>
+      <strong>Time:</strong> <span id="time"></span>
+    </div>
+    
+    <button onclick="testBackend()">Test Backend Connection</button>
+    <button onclick="goToLogin()">Go to Login Page</button>
+    
+    <div id="result"></div>
+  </div>
+
+  <script>
+    document.getElementById('time').textContent = new Date().toLocaleString();
+    
+    function testBackend() {
+      document.getElementById('result').innerHTML = '🔄 Testing backend...';
+      fetch('http://10.101.40.243:8000/health')
+        .then(res => res.json())
+        .then(data => {
+          document.getElementById('result').innerHTML = 
+            '✅ Backend OK!<br>Status: ' + data.status;
+        })
+        .catch(err => {
+          document.getElementById('result').innerHTML = 
+            '❌ Backend Error:<br>' + err.message;
+        });
+    }
+    
+    function goToLogin() {
+      window.location.href = '/';
+    }
+  </script>
+</body>
+</html>

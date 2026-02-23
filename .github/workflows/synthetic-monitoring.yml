@@ -1,0 +1,145 @@
+name: Synthetic Monitoring
+
+on:
+  schedule:
+    # Run every night at 2 AM UTC
+    - cron: "0 2 * * *"
+  workflow_dispatch: # Allow manual triggering
+
+jobs:
+  synthetic-checks:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "18"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: |
+          cd goldvision
+          npm install
+          npm install -g tsx
+
+      - name: Start services
+        run: |
+          cd goldvision
+          # Start backend and prophet service
+          npm run dev:api &
+          npm run dev:prophet &
+
+          # Wait for services to be ready
+          sleep 30
+
+          # Check if services are running
+          curl -f http://localhost:8000/health || exit 1
+          curl -f http://localhost:8001/health || exit 1
+
+      - name: Run synthetic checks
+        run: |
+          cd goldvision
+          npm run synthetic:check
+        env:
+          GOLDVISION_URL: http://localhost:8000
+
+      - name: Upload synthetic artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: synthetic-monitoring-${{ github.run_number }}
+          path: goldvision/artifacts/synthetic/
+          retention-days: 30
+
+      - name: Comment on PR (if applicable)
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+
+            try {
+              const summaryPath = path.join('goldvision/artifacts/synthetic/latest-summary.json');
+              if (fs.existsSync(summaryPath)) {
+                const summary = JSON.parse(fs.readFileSync(summaryPath, 'utf8'));
+                
+                const comment = `## 🔍 Synthetic Monitoring Results
+                
+                **Timestamp:** ${summary.timestamp}
+                **Duration:** ${summary.duration}ms
+                **Checks:** ${summary.summary.successful}/${summary.summary.total} successful
+                **Average Response Time:** ${summary.summary.avgResponseTime}ms
+                
+                ${summary.summary.failed > 0 ? '❌ **Some checks failed!**' : '✅ **All checks passed!**'}
+                
+                [View detailed results](https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})`;
+                
+                github.rest.issues.createComment({
+                  issue_number: context.issue.number,
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  body: comment
+                });
+              }
+            } catch (error) {
+              console.log('Could not create PR comment:', error.message);
+            }
+
+      - name: Create issue on failure
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+
+            try {
+              const summaryPath = path.join('goldvision/artifacts/synthetic/latest-summary.json');
+              let issueBody = '## 🚨 Synthetic Monitoring Failure\n\n';
+              
+              if (fs.existsSync(summaryPath)) {
+                const summary = JSON.parse(fs.readFileSync(summaryPath, 'utf8'));
+                issueBody += `**Failed Checks:** ${summary.summary.failed}/${summary.summary.total}\n`;
+                issueBody += `**Timestamp:** ${summary.timestamp}\n\n`;
+              }
+              
+              issueBody += `**Workflow Run:** [${context.runId}](https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})\n\n`;
+              issueBody += 'Please investigate the synthetic monitoring failures.\n\n';
+              issueBody += '**Next Steps:**\n';
+              issueBody += '1. Check service logs\n';
+              issueBody += '2. Verify all endpoints are responding\n';
+              issueBody += '3. Check database connectivity\n';
+              issueBody += '4. Verify Prophet service is running\n';
+              
+              // Check if issue already exists
+              const issues = await github.rest.issues.listForRepo({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                labels: 'synthetic-monitoring',
+                state: 'open'
+              });
+              
+              if (issues.data.length === 0) {
+                await github.rest.issues.create({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  title: `Synthetic Monitoring Failure - ${new Date().toISOString().split('T')[0]}`,
+                  body: issueBody,
+                  labels: ['synthetic-monitoring', 'bug', 'monitoring']
+                });
+              }
+            } catch (error) {
+              console.log('Could not create issue:', error.message);
+            }
+
+      - name: Cleanup
+        if: always()
+        run: |
+          # Kill any remaining processes
+          pkill -f "express-backend-enhanced.js" || true
+          pkill -f "uvicorn main:app" || true

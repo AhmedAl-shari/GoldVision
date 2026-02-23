@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Force Refresh - Clear All Cache</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        max-width: 600px;
+        margin: 50px auto;
+        padding: 20px;
+        background-color: #f5f5f5;
+      }
+      .container {
+        background: white;
+        padding: 30px;
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      }
+      button {
+        background: #007bff;
+        color: white;
+        border: none;
+        padding: 15px 30px;
+        font-size: 16px;
+        border-radius: 5px;
+        cursor: pointer;
+        margin: 10px;
+      }
+      button:hover {
+        background: #0056b3;
+      }
+      .status {
+        margin: 20px 0;
+        padding: 10px;
+        border-radius: 5px;
+        background: #e9ecef;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>🔄 Force Refresh - Clear All Cache</h1>
+      <p>
+        This will clear ALL browser data and force a complete refresh of the
+        application.
+      </p>
+
+      <div class="status" id="status">Ready to clear cache...</div>
+
+      <button onclick="clearAllCaches()">🗑️ Clear All Cache & Refresh</button>
+      <button onclick="window.location.href='/'">
+        🏠 Go to App (Skip Clear)
+      </button>
+    </div>
+
+    <script>
+      async function clearAllCaches() {
+        const status = document.getElementById("status");
+        status.innerHTML = "Clearing caches...";
+
+        try {
+          // Clear localStorage
+          localStorage.clear();
+          console.log("✅ Cleared localStorage");
+
+          // Clear sessionStorage
+          sessionStorage.clear();
+          console.log("✅ Cleared sessionStorage");
+
+          // Clear all caches
+          if ("caches" in window) {
+            const cacheNames = await caches.keys();
+            await Promise.all(cacheNames.map((name) => caches.delete(name)));
+            console.log("✅ Cleared all caches:", cacheNames);
+          }
+
+          // Clear IndexedDB
+          if ("indexedDB" in window) {
+            try {
+              const databases = await indexedDB.databases();
+              await Promise.all(
+                databases.map((db) => {
+                  return new Promise((resolve, reject) => {
+                    const deleteReq = indexedDB.deleteDatabase(db.name);
+                    deleteReq.onsuccess = () => resolve();
+                    deleteReq.onerror = () => reject(deleteReq.error);
+                  });
+                })
+              );
+              console.log("✅ Cleared IndexedDB");
+            } catch (e) {
+              console.log("⚠️ IndexedDB clear failed:", e);
+            }
+          }
+
+          // Clear cookies
+          document.cookie.split(";").forEach(function (c) {
+            document.cookie = c
+              .replace(/^ +/, "")
+              .replace(
+                /=.*/,
+                "=;expires=" + new Date().toUTCString() + ";path=/"
+              );
+          });
+          console.log("✅ Cleared cookies");
+
+          status.innerHTML = "✅ All caches cleared! Redirecting...";
+
+          // Force redirect with cache busting
+          setTimeout(() => {
+            window.location.href =
+              "/?v=" + Date.now() + "&cache_bust=" + Math.random();
+          }, 1000);
+        } catch (error) {
+          console.error("❌ Error clearing caches:", error);
+          status.innerHTML = "❌ Error clearing caches: " + error.message;
+        }
+      }
+
+      // Auto-clear on page load
+      window.addEventListener("load", () => {
+        setTimeout(clearAllCaches, 500);
+      });
+    </script>
+  </body>
+</html>

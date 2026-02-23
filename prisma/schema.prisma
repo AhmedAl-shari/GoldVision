@@ -1,0 +1,456 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Asset {
+  XAU // Gold
+}
+
+enum Region {
+  ADEN // Aden region
+  SANAA // Sana'a region
+}
+
+model Price {
+  id       Int      @id @default(autoincrement())
+  asset    Asset
+  currency String // "USD" | "YER"
+  ds       DateTime // normalized UTC midnight
+  price    Decimal
+
+  @@unique([asset, currency, ds])
+  @@index([asset, currency, ds])
+  @@index([ds])
+}
+
+// Keep old model for backward compatibility during migration
+model GoldPrice {
+  id    Int    @id @default(autoincrement())
+  ds    String @unique
+  price Float
+
+  @@index([ds])
+}
+
+model Forecast {
+  id               Int      @id @default(autoincrement())
+  asset            Asset
+  currency         String
+  generatedAt      DateTime
+  horizonDays      Int
+  ds               DateTime
+  yhat             Decimal
+  yhatLower        Decimal
+  yhatUpper        Decimal
+  modelVersion     String   @default("prophet-1.1")
+  trainingWindow   Int      @default(30)
+  holidaysEnabled  Boolean  @default(true)
+  seasonalityFlags String   @default("{}")
+
+  @@unique([asset, currency, generatedAt, ds])
+  @@index([asset, currency, ds])
+  @@index([generatedAt])
+}
+
+model ForecastRun {
+  id               Int      @id @default(autoincrement())
+  generatedAt      DateTime @unique
+  horizonDays      Int
+  modelVersion     String   @default("prophet-1.1")
+  params           String   @default("{}")
+  trainingWindow   Int      @default(30)
+  holidaysEnabled  Boolean  @default(true)
+  seasonalityFlags String   @default("{}")
+  randomState      Int?
+
+  @@index([generatedAt])
+}
+
+// Enhanced Forecast Models
+model EnhancedForecast {
+  id                Int      @id @default(autoincrement())
+  asset             Asset
+  currency          String
+  generatedAt       DateTime
+  horizonDays       Int
+  ds                DateTime
+  ensembleYhat      Decimal // Ensemble prediction
+  ensembleLower     Decimal // Lower bound
+  ensembleUpper     Decimal // Upper bound
+  marketRegime      String // "bull", "bear", "volatile", "stable"
+  overallConfidence Float // 0-1
+  modelVersion      String   @default("enhanced-ensemble-1.0")
+
+  // Relations
+  models   EnhancedForecastModel[]
+  features ForecastFeature[]
+
+  @@unique([asset, currency, generatedAt, ds])
+  @@index([asset, currency, ds])
+  @@index([generatedAt])
+  @@index([marketRegime])
+}
+
+model EnhancedForecastModel {
+  id                 Int    @id @default(autoincrement())
+  enhancedForecastId Int
+  modelName          String // "Prophet", "LSTM", "XGBoost", etc.
+  predictions        String // JSON array of predictions
+  confidence         Float // 0-1
+  mae                Float?
+  mape               Float?
+  weight             Float // Weight in ensemble
+
+  enhancedForecast EnhancedForecast @relation(fields: [enhancedForecastId], references: [id], onDelete: Cascade)
+
+  @@index([enhancedForecastId])
+  @@index([modelName])
+}
+
+model ForecastFeature {
+  id                  Int    @id @default(autoincrement())
+  enhancedForecastId  Int
+  featureName         String // "RSI", "DXY", "Sentiment", etc.
+  importanceScore     Float // 0-1
+  contributionPercent Float // 0-100
+
+  enhancedForecast EnhancedForecast @relation(fields: [enhancedForecastId], references: [id], onDelete: Cascade)
+
+  @@index([enhancedForecastId])
+  @@index([featureName])
+}
+
+model ForecastAccuracy {
+  id             Int      @id @default(autoincrement())
+  asset          Asset
+  currency       String
+  forecastDate   DateTime // Date the forecast was made
+  actualDate     DateTime // Date the actual price occurred
+  predictedPrice Decimal
+  actualPrice    Decimal
+  error          Decimal // absolute error
+  errorPercent   Float // percentage error
+  modelVersion   String
+  createdAt      DateTime @default(now())
+
+  @@index([asset, currency])
+  @@index([forecastDate])
+  @@index([actualDate])
+  @@index([createdAt])
+}
+
+model User {
+  id           Int      @id @default(autoincrement())
+  email        String   @unique
+  passwordHash String?
+  googleId     String?  @unique
+  name         String?
+  role         String   @default("user")
+  locale       String   @default("en")
+  isVerified   Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  alerts            Alert[]
+  pushSubscriptions PushSubscription[]
+  shopReviews       ShopReview[]
+}
+
+model Alert {
+  id          Int       @id @default(autoincrement())
+  userId      Int
+  asset       Asset
+  currency    String
+  ruleType    String // 'price_above' | 'price_below'
+  threshold   Decimal
+  direction   String // 'above' | 'below'
+  triggeredAt DateTime?
+  createdAt   DateTime  @default(now())
+
+  user        User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  performance AlertPerformance?
+
+  @@index([userId, asset, currency])
+  @@index([triggeredAt])
+}
+
+model AlertPerformance {
+  id                 Int       @id @default(autoincrement())
+  alertId            Int
+  accuracy           Float // 0-100%
+  totalTriggers      Int       @default(0)
+  successfulTriggers Int       @default(0)
+  avgResponseTime    Float // hours
+  profitability      Float // percentage
+  lastTriggered      DateTime?
+  lastUpdated        DateTime  @default(now())
+
+  alert Alert @relation(fields: [alertId], references: [id], onDelete: Cascade)
+
+  @@unique([alertId])
+  @@index([lastUpdated])
+}
+
+model PushSubscription {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  endpoint  String
+  keys      String
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model InvalidatedToken {
+  id        Int      @id @default(autoincrement())
+  token     String   @unique
+  createdAt DateTime @default(now())
+
+  @@index([token])
+}
+
+model ModelComparison {
+  id                      Int      @id @default(autoincrement())
+  generatedAt             DateTime
+  horizonDays             Int
+  prophetMae              Float
+  prophetMape             Float
+  prophetMase             Float
+  naiveMae                Float
+  naiveMape               Float
+  naiveMase               Float
+  seasonalMae             Float
+  seasonalMape            Float
+  seasonalMase            Float
+  arimaMae                Float
+  arimaMape               Float
+  arimaMase               Float
+  dmTestProphetVsNaive    Float
+  dmTestProphetVsSeasonal Float
+  dmTestProphetVsArima    Float
+  trainingWindow          Int
+
+  @@index([generatedAt])
+}
+
+model RetrainTicket {
+  id          Int       @id @default(autoincrement())
+  requestedAt DateTime
+  reason      String
+  status      String    @default("pending") // pending, in_progress, completed, failed
+  requestedBy Int
+  completedAt DateTime?
+  notes       String?
+
+  @@index([requestedAt])
+  @@index([status])
+}
+
+model FxRate {
+  id     Int      @id @default(autoincrement())
+  date   DateTime // normalized UTC midnight
+  region Region // ADEN or SANAA
+  rate   Decimal // YER per USD
+  source String   @default("manual") // source of the rate
+  asOf   DateTime @default(now()) // when this rate was last updated
+
+  @@unique([date, region])
+  @@index([date])
+  @@index([region])
+}
+
+model UserPrefs {
+  userId    Int      @id
+  currency  String   @default("USD")
+  region    String   @default("global")
+  unit      String   @default("gram")
+  karat     Int      @default(24)
+  horizon   Int      @default(30)
+  locale    String   @default("en")
+  theme     String   @default("system")
+  updatedAt DateTime @updatedAt
+}
+
+model SpotRate {
+  id          Int      @id @default(autoincrement())
+  asOf        DateTime // UTC timestamp when spot was fetched
+  usdPerOunce Decimal // USD per troy ounce
+  source      String   @default("metals-api") // source of the spot rate
+  meta        String   @default("{}") // JSON metadata
+
+  @@index([asOf], map: "SpotRate_asOf_idx")
+  @@index([asOf(sort: Desc)], map: "SpotRate_asOf_desc_idx")
+}
+
+// Real-time financial news items
+model News {
+  id          Int      @id @default(autoincrement())
+  title       String
+  summary     String?
+  url         String   @unique
+  source      String
+  publishedAt DateTime
+  tickers     String   @default("[]") // JSON array
+  tags        String   @default("[]") // JSON array
+  image       String?
+  video       String?
+  sentiment   Int? // -1, 0, 1 for negative, neutral, positive
+  createdAt   DateTime @default(now())
+
+  @@index([publishedAt])
+  @@index([createdAt])
+  @@index([sentiment])
+}
+
+// Portfolio Management Models
+model Portfolio {
+  id          String   @id @default(cuid())
+  userId      String
+  name        String
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  transactions Transaction[]
+  holdings     Holding[]
+
+  @@map("portfolios")
+}
+
+model Transaction {
+  id          String   @id @default(cuid())
+  portfolioId String
+  type        String // "BUY" | "SELL"
+  asset       Asset
+  amount      Decimal // Amount of gold (in ounces)
+  price       Decimal // Price per ounce at time of transaction
+  totalValue  Decimal // amount * price
+  fees        Decimal? // Transaction fees
+  currency    String
+  timestamp   DateTime @default(now())
+  notes       String?
+
+  // Relations
+  portfolio Portfolio @relation(fields: [portfolioId], references: [id], onDelete: Cascade)
+
+  @@map("transactions")
+}
+
+model Holding {
+  id           String   @id @default(cuid())
+  portfolioId  String
+  asset        Asset
+  amount       Decimal // Current amount held
+  avgCost      Decimal // Average cost per ounce
+  totalCost    Decimal // Total cost basis
+  currentValue Decimal // Current market value
+  currency     String
+  updatedAt    DateTime @updatedAt
+
+  // Relations
+  portfolio Portfolio @relation(fields: [portfolioId], references: [id], onDelete: Cascade)
+
+  @@unique([portfolioId, asset])
+  @@map("holdings")
+}
+
+// Gold Shops Models
+enum YemenRegion {
+  SANAA
+  ADEN
+  TAIZ
+  HODEIDAH
+}
+
+enum ShopService {
+  buy_gold
+  sell_gold
+  jewelry_repair
+  custom_design
+  appraisal
+  gold_exchange
+  certification
+}
+
+model GoldShop {
+  id             String        @id @default(cuid())
+  name           String
+  nameAr         String?
+  region         YemenRegion
+  lat            Float
+  lng            Float
+  address        String
+  addressAr      String?
+  rating         Float         @default(0)
+  reviewCount    Int           @default(0)
+  certified      Boolean       @default(false)
+  verified       Boolean       @default(false)
+  trustScore     Int? // 0-100
+  phone          String?
+  email          String?
+  website        String?
+  openingHours   String?
+  openingHoursAr String?
+  description    String?
+  descriptionAr  String?
+  priceMin       Decimal? // YER per gram
+  priceMax       Decimal? // YER per gram
+  services       ShopService[]
+  photos         ShopPhoto[]
+  reviews        ShopReview[]
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  lastUpdated    DateTime?
+
+  @@index([region])
+  @@index([lat, lng])
+  @@index([certified])
+  @@index([verified])
+  @@index([rating])
+  @@map("gold_shops")
+}
+
+model ShopPhoto {
+  id        String   @id @default(cuid())
+  shopId    String
+  url       String
+  thumbnail String?
+  caption   String?
+  createdAt DateTime @default(now())
+
+  shop GoldShop @relation(fields: [shopId], references: [id], onDelete: Cascade)
+
+  @@index([shopId])
+  @@map("shop_photos")
+}
+
+model ShopReview {
+  id        String   @id @default(cuid())
+  shopId    String
+  userId    Int?
+  userName  String
+  rating    Int // 1-5
+  comment   String
+  verified  Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  shop GoldShop @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  user User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([shopId])
+  @@index([userId])
+  @@index([rating])
+  @@index([createdAt])
+  @@map("shop_reviews")
+}

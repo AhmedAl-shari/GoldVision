@@ -1,0 +1,15 @@
+
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="gold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#FFD700;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#FFA500;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="102.4" fill="#1e40af"/>
+  <circle cx="256" cy="204.8" r="76.8" fill="url(#gold)"/>
+  <path d="M153.6 307.2 Q256 409.6 358.4 307.2" 
+        stroke="url(#gold)" stroke-width="25.6" fill="none" stroke-linecap="round"/>
+  <text x="256" y="460.8" font-family="Arial, sans-serif" font-size="61.44" 
+        font-weight="bold" text-anchor="middle" fill="white">G</text>
+</svg>

@@ -1,0 +1,10 @@
+# Security Rate Limiting Screenshot
+
+This file should contain a screenshot showing rate limiting in action.
+
+To capture this screenshot:
+1. Make multiple rapid requests to login endpoint
+2. Show rate limit exceeded error (429)
+3. Demonstrate rate limiting headers
+4. Take screenshot of rate limiting response
+5. Save as security-rate-limiting.png

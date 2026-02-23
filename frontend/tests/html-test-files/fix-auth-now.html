@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fix Authentication - GoldVision</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .container {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            padding: 40px;
+            max-width: 600px;
+            width: 100%;
+        }
+        h1 { color: #1a202c; font-size: 28px; margin-bottom: 16px; }
+        .status { background: #f7fafc; border-radius: 8px; padding: 16px; margin: 20px 0; font-family: monospace; font-size: 12px; }
+        .error { color: #ef4444; }
+        .success { color: #10b981; }
+        .button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 14px 32px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 12px;
+        }
+        .button:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4); }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Fix Authentication</h1>
+        <div id="diagnostic"></div>
+        <button class="button" onclick="fixAndLogin()">🔄 Fix & Login Automatically</button>
+        <button class="button" onclick="window.location.href='/login'">🔐 Go to Login Manually</button>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:8000';
+        
+        async function runDiagnostic() {
+            const diagnosticEl = document.getElementById('diagnostic');
+            let html = '<div class="status">';
+            
+            // Check current token
+            const currentToken = localStorage.getItem('access_token');
+            html += '<div><strong>Current Token:</strong></div>';
+            if (currentToken) {
+                html += `<div class="error">❌ Found: ${currentToken.substring(0, 50)}...</div>`;
+                if (currentToken.startsWith('eyJ')) {
+                    html += '<div class="success">✅ Format: JWT (correct format)</div>';
+                    
+                    // Try to decode
+                    try {
+                        const payload = JSON.parse(atob(currentToken.split('.')[1]));
+                        html += `<div>User ID: ${payload.userId}</div>`;
+                        html += `<div>Email: ${payload.email}</div>`;
+                        html += `<div>Role: ${payload.role}</div>`;
+                        html += `<div>Issued: ${new Date(payload.iat * 1000).toLocaleString()}</div>`;
+                        html += `<div>Expires: ${new Date(payload.exp * 1000).toLocaleString()}</div>`;
+                        
+                        const now = Date.now() / 1000;
+                        if (payload.exp < now) {
+                            html += '<div class="error">❌ Token EXPIRED!</div>';
+                        } else {
+                            html += '<div class="success">✅ Token not expired yet</div>';
+                        }
+                    } catch(e) {
+                        html += '<div class="error">❌ Cannot decode token</div>';
+                    }
+                } else {
+                    html += '<div class="error">❌ Format: NOT JWT (old demo token)</div>';
+                }
+            } else {
+                html += '<div class="error">❌ No token found</div>';
+            }
+            
+            html += '<br/><div><strong>Problem:</strong></div>';
+            html += '<div class="error">Your browser token doesn\'t work with the backend.</div>';
+            html += '<div class="error">You need to clear it and get a fresh one.</div>';
+            html += '</div>';
+            
+            diagnosticEl.innerHTML = html;
+        }
+        
+        async function fixAndLogin() {
+            const diagnosticEl = document.getElementById('diagnostic');
+            diagnosticEl.innerHTML = '<div class="status">🔄 Fixing authentication...</div>';
+            
+            try {
+                // Step 1: Clear everything
+                localStorage.clear();
+                sessionStorage.clear();
+                document.cookie.split(";").forEach(c => {
+                    document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
+                });
+                
+                diagnosticEl.innerHTML += '<div class="status success">✅ Cleared all old data</div>';
+                
+                // Step 2: Login automatically
+                diagnosticEl.innerHTML += '<div class="status">🔐 Logging in as demo@goldvision.com...</div>';
+                
+                const response = await fetch(`${API_URL}/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        email: 'demo@goldvision.com',
+                        password: 'demo123'
+                    })
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`Login failed: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                
+                // Step 3: Store new token
+                localStorage.setItem('access_token', data.access_token);
+                localStorage.setItem('refresh_token', data.refresh_token);
+                if (data.csrf_token) {
+                    localStorage.setItem('csrf_token', data.csrf_token);
+                }
+                
+                diagnosticEl.innerHTML += '<div class="status success">✅ Login successful!</div>';
+                diagnosticEl.innerHTML += `<div class="status success">✅ New token: ${data.access_token.substring(0, 50)}...</div>`;
+                
+                // Step 4: Test the token
+                diagnosticEl.innerHTML += '<div class="status">🧪 Testing new token...</div>';
+                
+                const testResponse = await fetch(`${API_URL}/user/messaging-channels/test`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${data.access_token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (testResponse.ok) {
+                    diagnosticEl.innerHTML += '<div class="status success">✅ Token works! Backend accepts it!</div>';
+                    diagnosticEl.innerHTML += '<div class="status success">✅ Redirecting to Admin page...</div>';
+                    
+                    setTimeout(() => {
+                        window.location.href = '/admin';
+                    }, 2000);
+                } else {
+                    diagnosticEl.innerHTML += `<div class="status error">❌ Test failed: ${testResponse.status}</div>`;
+                }
+                
+            } catch (error) {
+                diagnosticEl.innerHTML += `<div class="status error">❌ Error: ${error.message}</div>`;
+            }
+        }
+        
+        // Run diagnostic on load
+        runDiagnostic();
+    </script>
+</body>
+</html>
+

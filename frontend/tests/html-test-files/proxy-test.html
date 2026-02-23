@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GoldVision - Proxy Test</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        background-color: #1e40af;
+        color: white;
+        padding: 20px;
+        text-align: center;
+        margin: 0;
+      }
+      .container {
+        max-width: 400px;
+        margin: 0 auto;
+      }
+      .test-box {
+        background-color: #3b82f6;
+        padding: 20px;
+        border-radius: 10px;
+        margin: 20px 0;
+      }
+      .status {
+        font-weight: bold;
+        padding: 10px;
+        border-radius: 5px;
+        margin: 10px 0;
+      }
+      .success {
+        background-color: #10b981;
+      }
+      .error {
+        background-color: #ef4444;
+      }
+      .loading {
+        background-color: #f59e0b;
+      }
+      .main-app-link {
+        background-color: #10b981;
+        color: white;
+        padding: 15px 30px;
+        border-radius: 10px;
+        text-decoration: none;
+        font-weight: bold;
+        display: inline-block;
+        margin: 20px 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>🏆 GoldVision</h1>
+      <h2>Proxy Test</h2>
+
+      <div class="test-box">
+        <h3>📱 Device Info</h3>
+        <p>Screen: <span id="screen-size">Loading...</span></p>
+        <p>User Agent: <span id="user-agent">Loading...</span></p>
+      </div>
+
+      <div class="test-box">
+        <h3>🌐 Network Test</h3>
+        <p>
+          Frontend:
+          <span id="frontend-status" class="status loading">Testing...</span>
+        </p>
+        <p>
+          Backend (Direct):
+          <span id="backend-direct-status" class="status loading"
+            >Testing...</span
+          >
+        </p>
+        <p>
+          Backend (Proxy):
+          <span id="backend-proxy-status" class="status loading"
+            >Testing...</span
+          >
+        </p>
+        <p>
+          Prophet (Direct):
+          <span id="prophet-direct-status" class="status loading"
+            >Testing...</span
+          >
+        </p>
+      </div>
+
+      <div class="test-box">
+        <h3>🔗 API Test</h3>
+        <p>
+          CSRF Token (Proxy):
+          <span id="csrf-proxy-status" class="status loading">Testing...</span>
+        </p>
+        <p>
+          Health Check (Proxy):
+          <span id="health-proxy-status" class="status loading"
+            >Testing...</span
+          >
+        </p>
+      </div>
+
+      <div class="test-box">
+        <h3>📊 JavaScript Test</h3>
+        <p>
+          Basic JS:
+          <span id="js-status" class="status loading">Testing...</span>
+        </p>
+        <p>
+          Fetch API:
+          <span id="fetch-status" class="status loading">Testing...</span>
+        </p>
+      </div>
+
+      <div class="test-box">
+        <h3>🚀 Next Steps</h3>
+        <p>If proxy tests pass, try the main app:</p>
+        <a href="/" class="main-app-link">Go to Main App</a>
+        <p>If any fail, we need to fix those issues first.</p>
+      </div>
+    </div>
+
+    <script>
+      // Device info
+      document.getElementById("screen-size").textContent =
+        window.innerWidth + "x" + window.innerHeight;
+      document.getElementById("user-agent").textContent =
+        navigator.userAgent.substring(0, 50) + "...";
+
+      // Test functions
+      function updateStatus(elementId, success, message) {
+        const element = document.getElementById(elementId);
+        element.textContent = message;
+        element.className = "status " + (success ? "success" : "error");
+      }
+
+      // Test basic JavaScript
+      try {
+        updateStatus("js-status", true, "✅ Basic JS working");
+      } catch (error) {
+        updateStatus("js-status", false, "❌ JS failed: " + error.message);
+      }
+
+      // Test frontend
+      updateStatus("frontend-status", true, "✅ Frontend loaded");
+
+      // Test direct backend connection (should fail on phone)
+      fetch("http://192.168.0.115:8000/health")
+        .then((response) => {
+          if (response.ok) {
+            return response.text();
+          } else {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+          }
+        })
+        .then((data) => {
+          updateStatus(
+            "backend-direct-status",
+            true,
+            "✅ Backend direct connected"
+          );
+        })
+        .catch((error) => {
+          updateStatus(
+            "backend-direct-status",
+            false,
+            "❌ Backend direct failed: " + error.message
+          );
+        });
+
+      // Test proxy backend connection (should work on phone)
+      fetch("/api/health")
+        .then((response) => {
+          if (response.ok) {
+            return response.text();
+          } else {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+          }
+        })
+        .then((data) => {
+          updateStatus(
+            "backend-proxy-status",
+            true,
+            "✅ Backend proxy connected"
+          );
+          updateStatus("fetch-status", true, "✅ Fetch API working");
+        })
+        .catch((error) => {
+          updateStatus(
+            "backend-proxy-status",
+            false,
+            "❌ Backend proxy failed: " + error.message
+          );
+          updateStatus(
+            "fetch-status",
+            false,
+            "❌ Fetch failed: " + error.message
+          );
+        });
+
+      // Test direct Prophet connection (should fail on phone)
+      fetch("http://192.168.0.115:8001/health")
+        .then((response) => {
+          if (response.ok) {
+            return response.text();
+          } else {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+          }
+        })
+        .then((data) => {
+          updateStatus(
+            "prophet-direct-status",
+            true,
+            "✅ Prophet direct connected"
+          );
+        })
+        .catch((error) => {
+          updateStatus(
+            "prophet-direct-status",
+            false,
+            "❌ Prophet direct failed: " + error.message
+          );
+        });
+
+      // Test CSRF token via proxy
+      fetch("/api/csrf")
+        .then((response) => {
+          if (response.ok) {
+            return response.text();
+          } else {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+          }
+        })
+        .then((data) => {
+          updateStatus("csrf-proxy-status", true, "✅ CSRF token received");
+        })
+        .catch((error) => {
+          updateStatus(
+            "csrf-proxy-status",
+            false,
+            "❌ CSRF failed: " + error.message
+          );
+        });
+
+      // Test health endpoint via proxy
+      fetch("/api/health")
+        .then((response) => {
+          if (response.ok) {
+            return response.text();
+          } else {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+          }
+        })
+        .then((data) => {
+          updateStatus("health-proxy-status", true, "✅ Health check passed");
+        })
+        .catch((error) => {
+          updateStatus(
+            "health-proxy-status",
+            false,
+            "❌ Health failed: " + error.message
+          );
+        });
+    </script>
+  </body>
+</html>

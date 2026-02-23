@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Nuclear Reload - Fix API Issues</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        max-width: 600px;
+        margin: 50px auto;
+        padding: 20px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+      }
+      .container {
+        background: rgba(255, 255, 255, 0.1);
+        padding: 30px;
+        border-radius: 15px;
+        backdrop-filter: blur(10px);
+        text-align: center;
+      }
+      h1 {
+        margin-bottom: 20px;
+        font-size: 2.5em;
+      }
+      .status {
+        margin: 20px 0;
+        padding: 15px;
+        border-radius: 10px;
+        background: rgba(255, 255, 255, 0.2);
+        font-size: 1.2em;
+      }
+      .countdown {
+        font-size: 3em;
+        font-weight: bold;
+        color: #ffeb3b;
+        margin: 20px 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>🚀 Nuclear Reload</h1>
+      <p>
+        This will completely clear all browser data and reload the app with the
+        latest code.
+      </p>
+
+      <div class="status" id="status">Preparing nuclear reload...</div>
+      <div class="countdown" id="countdown">5</div>
+
+      <p>Redirecting to the fixed app...</p>
+    </div>
+
+    <script>
+      let countdown = 5;
+      const countdownEl = document.getElementById("countdown");
+      const statusEl = document.getElementById("status");
+
+      const countdownInterval = setInterval(() => {
+        countdown--;
+        countdownEl.textContent = countdown;
+
+        if (countdown <= 0) {
+          clearInterval(countdownInterval);
+          performNuclearReload();
+        }
+      }, 1000);
+
+      async function performNuclearReload() {
+        statusEl.textContent = "Clearing all browser data...";
+
+        try {
+          // Clear localStorage
+          localStorage.clear();
+          console.log("✅ Cleared localStorage");
+
+          // Clear sessionStorage
+          sessionStorage.clear();
+          console.log("✅ Cleared sessionStorage");
+
+          // Clear all caches
+          if ("caches" in window) {
+            const cacheNames = await caches.keys();
+            await Promise.all(cacheNames.map((name) => caches.delete(name)));
+            console.log("✅ Cleared all caches:", cacheNames);
+          }
+
+          // Clear IndexedDB
+          if ("indexedDB" in window) {
+            try {
+              const databases = await indexedDB.databases();
+              await Promise.all(
+                databases.map((db) => {
+                  return new Promise((resolve, reject) => {
+                    const deleteReq = indexedDB.deleteDatabase(db.name);
+                    deleteReq.onsuccess = () => resolve();
+                    deleteReq.onerror = () => reject(deleteReq.error);
+                  });
+                })
+              );
+              console.log("✅ Cleared IndexedDB");
+            } catch (e) {
+              console.log("⚠️ IndexedDB clear failed:", e);
+            }
+          }
+
+          // Clear cookies
+          document.cookie.split(";").forEach(function (c) {
+            document.cookie = c
+              .replace(/^ +/, "")
+              .replace(
+                /=.*/,
+                "=;expires=" + new Date().toUTCString() + ";path=/"
+              );
+          });
+          console.log("✅ Cleared cookies");
+
+          statusEl.textContent = "✅ All data cleared! Reloading...";
+
+          // Force redirect with multiple cache busting parameters
+          setTimeout(() => {
+            const timestamp = Date.now();
+            const random = Math.random().toString(36).substring(7);
+            window.location.href = `/?v=${timestamp}&cb=${random}&nuclear=true&reload=${Date.now()}`;
+          }, 500);
+        } catch (error) {
+          console.error("❌ Error during nuclear reload:", error);
+          statusEl.textContent = "❌ Error: " + error.message;
+        }
+      }
+    </script>
+  </body>
+</html>

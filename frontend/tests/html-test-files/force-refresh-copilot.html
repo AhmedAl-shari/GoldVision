@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Force Refresh Copilot - GoldVision</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 40px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .container {
+      max-width: 600px;
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      border-radius: 20px;
+      padding: 40px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      text-align: center;
+    }
+    h1 { font-size: 2.5em; margin: 0 0 20px; }
+    .progress {
+      background: rgba(255,255,255,0.2);
+      border-radius: 10px;
+      height: 40px;
+      margin: 30px 0;
+      overflow: hidden;
+    }
+    .progress-bar {
+      background: linear-gradient(90deg, #10b981, #059669);
+      height: 100%;
+      width: 0%;
+      transition: width 0.3s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+    }
+    .step {
+      margin: 15px 0;
+      padding: 15px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 10px;
+      text-align: left;
+    }
+    .done { color: #10b981; }
+    .spinner {
+      border: 4px solid rgba(255,255,255,0.3);
+      border-top: 4px solid white;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+      margin: 20px auto;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🔄 Force Refresh Copilot</h1>
+    <p style="font-size: 1.2em; margin-bottom: 30px;">
+      Clearing all caches and reloading with fresh code...
+    </p>
+
+    <div class="progress">
+      <div class="progress-bar" id="progressBar">0%</div>
+    </div>
+
+    <div id="steps"></div>
+    <div class="spinner" id="spinner"></div>
+  </div>
+
+  <script>
+    const steps = [
+      { name: '🗑️ Clearing localStorage', action: () => localStorage.clear() },
+      { name: '🗑️ Clearing sessionStorage', action: () => sessionStorage.clear() },
+      { name: '🔄 Unregistering service workers', action: async () => {
+        if ('serviceWorker' in navigator) {
+          const registrations = await navigator.serviceWorker.getRegistrations();
+          for (let registration of registrations) {
+            await registration.unregister();
+          }
+        }
+      }},
+      { name: '🗑️ Clearing all caches', action: async () => {
+        if ('caches' in window) {
+          const cacheNames = await caches.keys();
+          for (let name of cacheNames) {
+            await caches.delete(name);
+          }
+        }
+      }},
+      { name: '🔄 Clearing IndexedDB', action: async () => {
+        if ('indexedDB' in window) {
+          const dbs = await indexedDB.databases?.() || [];
+          for (let db of dbs) {
+            indexedDB.deleteDatabase(db.name);
+          }
+        }
+      }},
+      { name: '✅ Refreshing page', action: () => {
+        setTimeout(() => {
+          window.location.href = '/dashboard?_t=' + Date.now() + '&_force=true';
+        }, 500);
+      }}
+    ];
+
+    const stepsDiv = document.getElementById('steps');
+    const progressBar = document.getElementById('progressBar');
+    const spinner = document.getElementById('spinner');
+
+    async function executeSteps() {
+      for (let i = 0; i < steps.length; i++) {
+        const step = steps[i];
+        
+        // Add step to UI
+        const stepDiv = document.createElement('div');
+        stepDiv.className = 'step';
+        stepDiv.innerHTML = `<span id="step-${i}">${step.name}...</span>`;
+        stepsDiv.appendChild(stepDiv);
+
+        try {
+          // Execute step
+          await step.action();
+          
+          // Mark as done
+          document.getElementById(`step-${i}`).innerHTML = `${step.name} <span class="done">✓</span>`;
+          
+          // Update progress
+          const progress = ((i + 1) / steps.length * 100).toFixed(0);
+          progressBar.style.width = progress + '%';
+          progressBar.textContent = progress + '%';
+          
+          // Wait a bit for visual effect
+          await new Promise(resolve => setTimeout(resolve, 300));
+        } catch (error) {
+          console.error(`Error in step ${i}:`, error);
+          document.getElementById(`step-${i}`).innerHTML = `${step.name} <span style="color: #f59e0b">⚠️</span>`;
+        }
+      }
+      
+      spinner.style.display = 'none';
+    }
+
+    // Start the process
+    executeSteps();
+  </script>
+</body>
+</html>
+

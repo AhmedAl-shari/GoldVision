@@ -1,0 +1,10 @@
+# Accessibility Keyboard Navigation Screenshot
+
+This file should contain a screenshot showing keyboard navigation testing.
+
+To capture this screenshot:
+1. Open GoldVision in Chrome
+2. Use Tab key to navigate through the interface
+3. Show focus indicators on various elements
+4. Take screenshot showing keyboard navigation
+5. Save as accessibility-keyboard-nav.png

@@ -1,0 +1,96 @@
+╔══════════════════════════════════════════════════════════════════╗
+║                   🔥 FIREWALL FIX REQUIRED                       ║
+╚══════════════════════════════════════════════════════════════════╝
+
+PROBLEM: macOS Firewall is blocking port 8000
+- Frontend (port 5173) works ✅
+- Backend (port 8000) blocked ❌
+- Phone gets "Network Error" when logging in
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+SOLUTION: Allow Port 8000 Through Firewall
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+OPTION 1: GUI Method (Recommended)
+──────────────────────────────────
+
+1. Open "System Settings" (or System Preferences)
+2. Go to "Network" → "Firewall"
+   (Or "Privacy & Security" → "Firewall")
+3. Click "Firewall Options..." button
+4. Look for "node" in the list
+5. If found: Set to "Allow incoming connections"
+6. If not found:
+   - Click "+" button
+   - Navigate to: /usr/local/bin/node
+     (Or /opt/homebrew/bin/node if on M1/M2 Mac)
+   - Add it
+   - Set to "Allow incoming connections"
+7. Click "OK"
+8. Try phone login again!
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+OPTION 2: Temporarily Disable Firewall (Quick Test)
+────────────────────────────────────────────────────
+
+Open Terminal and run:
+
+sudo /usr/libexec/ApplicationFirewall/socketfilterfw --setglobalstate off
+
+Then try logging in from phone.
+If it works, the firewall was the problem!
+
+DON'T FORGET to turn firewall back on after testing:
+
+sudo /usr/libexec/ApplicationFirewall/socketfilterfw --setglobalstate on
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+OPTION 3: Create Firewall Rule (Terminal)
+──────────────────────────────────────────
+
+Find where node is installed:
+which node
+
+Then add to firewall (replace /path/to/node with actual path):
+sudo /usr/libexec/ApplicationFirewall/socketfilterfw --add /usr/local/bin/node
+sudo /usr/libexec/ApplicationFirewall/socketfilterfw --unblockapp /usr/local/bin/node
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+VERIFICATION:
+─────────────
+
+After fixing firewall, test on phone:
+
+1. Go to: http://192.168.0.4:8000/health
+   Should show JSON data
+
+2. Go to: http://192.168.0.4:5173
+   Log in with: demo@goldvision.com / demo123
+   Should work! ✅
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+WHY THIS HAPPENS:
+─────────────────
+
+- macOS Firewall blocks incoming network connections by default
+- Port 5173 (Vite) might have been allowed earlier
+- Port 8000 (Backend) is blocked
+- Phone can load page (5173) but can't call API (8000)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+RECOMMENDATION:
+───────────────
+
+Use OPTION 1 (GUI Method) for permanent fix.
+This allows node.js through firewall for both ports.
+
+╔══════════════════════════════════════════════════════════════════╗
+║  After fixing firewall, phone login will work immediately!       ║
+╚══════════════════════════════════════════════════════════════════╝

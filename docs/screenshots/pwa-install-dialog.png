@@ -1,0 +1,9 @@
+# PWA Install Dialog Screenshot
+
+This file should contain a screenshot of the PWA install dialog shown in Chrome browser.
+
+To capture this screenshot:
+1. Open GoldVision in Chrome
+2. Look for the install button in the address bar
+3. Click it to see the install dialog
+4. Take a screenshot and save as pwa-install-dialog.png

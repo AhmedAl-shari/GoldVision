@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Force Refresh Alerts Page</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      max-width: 600px;
+      margin: 100px auto;
+      padding: 40px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+    }
+    .container {
+      background: white;
+      border-radius: 20px;
+      padding: 40px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      text-align: center;
+    }
+    h1 { color: #667eea; margin-top: 0; }
+    .spinner {
+      border: 4px solid #f3f3f3;
+      border-top: 4px solid #667eea;
+      border-radius: 50%;
+      width: 50px;
+      height: 50px;
+      animation: spin 1s linear infinite;
+      margin: 30px auto;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    .status {
+      margin: 20px 0;
+      padding: 15px;
+      background: #e3f2fd;
+      border-radius: 8px;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🔄 Force Refreshing Alerts Page</h1>
+    <p>Clearing cache and forcing fresh load...</p>
+    <div class="spinner"></div>
+    <div class="status" id="status">Initializing...</div>
+  </div>
+
+  <script>
+    const log = (msg) => {
+      const status = document.getElementById('status');
+      status.innerHTML = msg + '<br>' + status.innerHTML;
+    };
+
+    async function forceRefresh() {
+      try {
+        log('1️⃣ Clearing service workers...');
+        if ('serviceWorker' in navigator) {
+          const regs = await navigator.serviceWorker.getRegistrations();
+          for (const reg of regs) {
+            await reg.unregister();
+          }
+          log('✅ Service workers cleared');
+        }
+
+        log('2️⃣ Clearing all caches...');
+        if ('caches' in window) {
+          const keys = await caches.keys();
+          await Promise.all(keys.map(k => caches.delete(k)));
+          log(`✅ Cleared ${keys.length} cache(s)`);
+        }
+
+        log('3️⃣ Clearing localStorage/sessionStorage...');
+        // Don't clear auth tokens, just cache-related items
+        const authToken = localStorage.getItem('access_token');
+        const csrfToken = localStorage.getItem('csrf_token');
+        const refreshToken = localStorage.getItem('refresh_token');
+        
+        localStorage.clear();
+        sessionStorage.clear();
+        
+        // Restore auth tokens
+        if (authToken) localStorage.setItem('access_token', authToken);
+        if (csrfToken) localStorage.setItem('csrf_token', csrfToken);
+        if (refreshToken) localStorage.setItem('refresh_token', refreshToken);
+        log('✅ Storage cleared (auth tokens preserved)');
+
+        log('4️⃣ Adding cache-busting parameter...');
+        const cacheBust = Date.now();
+        log('✅ Cache bust parameter: ' + cacheBust);
+
+        log('5️⃣ Redirecting to Alerts page...');
+        setTimeout(() => {
+          window.location.href = `/alerts?_refresh=${cacheBust}&_cb=${Math.random()}`;
+        }, 1000);
+
+      } catch (error) {
+        log('❌ Error: ' + error.message);
+        log('⚠️ Manual refresh required - press Ctrl+Shift+R');
+      }
+    }
+
+    // Start the process
+    forceRefresh();
+  </script>
+</body>
+</html>
+
