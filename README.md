@@ -22,10 +22,10 @@ This will:
 - ✅ Generate 100 news articles from fixtures
 - ✅ Open the application in your browser
 
-**Demo URLs:**
+**Demo URLs** (Docker: frontend on port **3000**; local `npm run dev`: frontend on **5173**):
 
-- 🏠 **Main App**: http://localhost:5173
-- 📊 **Admin Dashboard**: http://localhost:5173/admin
+- 🏠 **Main App**: http://localhost:3000
+- 📊 **Admin Dashboard**: http://localhost:3000/admin
 - 🔧 **Backend API**: http://localhost:8000
 - 🤖 **Prophet Service**: http://localhost:8001
 - 📈 **Metrics**: http://localhost:8000/metrics
@@ -34,7 +34,7 @@ This will:
 
 | Service         | Port | URL                           | Description              |
 | --------------- | ---- | ----------------------------- | ------------------------ |
-| Frontend        | 5173 | http://localhost:5173         | React development server |
+| Frontend        | 3000 | http://localhost:3000         | React app (Docker); use 5173 for local `npm run dev` |
 | Backend API     | 8000 | http://localhost:8000         | Express.js main API      |
 | Prophet Service | 8001 | http://localhost:8001         | FastAPI ML forecasting   |
 | Metrics         | 8000 | http://localhost:8000/metrics | Prometheus metrics       |
@@ -88,7 +88,7 @@ _Mobile-responsive design with touch-friendly interface_
 **Evidence Links:**
 
 - 📊 [Download Backtest CSV](http://localhost:8000/backtest/download)
-- 📈 [View Accuracy Panel](http://localhost:5173/trends)
+- 📈 [View Accuracy Panel](http://localhost:3000/trends)
 - 🔬 [Model Comparison](http://localhost:8000/forecast/compare)
 
 > **Note**: Enhanced Forecast (Ensemble) typically outperforms Prophet-only by 15-20% MAPE reduction. See [Model Comparison](#model-comparison) for details.
@@ -433,7 +433,7 @@ For instant development environment setup, use the included Dev Container:
 ### Features
 
 - **Pre-configured Environment**: All tools and dependencies ready to use
-- **Port Forwarding**: Automatic forwarding of ports 5173, 8000, 8001
+- **Port Forwarding**: Automatic forwarding of ports 3000 (Docker frontend), 5173 (local dev), 8000, 8001
 - **VS Code Extensions**: Pre-installed extensions for Python, TypeScript, Playwright, and Prisma
 - **Git Integration**: Full git support with GitHub CLI
 - **Zero Configuration**: No manual setup required
@@ -577,7 +577,7 @@ For detailed information, see [OBSERVABILITY.md](OBSERVABILITY.md).
 
 3. **Access the application:**
 
-   - **Frontend**: http://localhost:5173
+   - **Frontend**: http://localhost:5173 (local dev) or http://localhost:3000 (Docker)
    - **Backend API**: http://localhost:8000
    - **API Documentation**: http://localhost:8000/docs
 
@@ -618,9 +618,9 @@ GoldVision is a fully functional Progressive Web App that can be installed on yo
 
 2. **Open in a supported browser:**
 
-   - Chrome/Edge: http://localhost:5173
-   - Firefox: http://localhost:5173
-   - Safari: http://localhost:5173
+   - Chrome/Edge: http://localhost:3000 (Docker) or http://localhost:5173 (local dev)
+   - Firefox: http://localhost:3000 (Docker) or http://localhost:5173 (local dev)
+   - Safari: http://localhost:3000 (Docker) or http://localhost:5173 (local dev)
 
 3. **Test installation:**
 
@@ -694,7 +694,7 @@ Deploy GoldVision to a staging environment with automatic HTTPS and monitoring:
 - 🔧 **Backend**: http://localhost:8000
 - 📊 **Admin**: https://staging.goldvision.com/admin
 - 📈 **Metrics**: http://localhost:9090 (Prometheus)
-- 📊 **Dashboard**: http://localhost:5173 (Main App)
+- 📊 **Dashboard**: http://localhost:3000 (Main App, Docker)
 
 ### Staging Features
 
@@ -886,7 +886,7 @@ python3 -m uvicorn main:app --reload --port 8001
    npm run dev
    ```
 
-   The React app will be available at `http://localhost:5173`
+   The React app will be available at `http://localhost:5173` (local dev) or `http://localhost:3000` (Docker).
 
 ## 📊 API Endpoints
 
@@ -1107,7 +1107,7 @@ GoldVision includes comprehensive backtesting capabilities to evaluate forecast 
 
 2. **Navigate to Trends page:**
 
-   - Open http://localhost:5173/trends
+   - Open http://localhost:3000/trends (Docker) or http://localhost:5173/trends (local dev)
    - Click "Show Accuracy Panel" button
 
 3. **View backtest results:**
@@ -1273,7 +1273,7 @@ PROPHET_RANDOM_STATE=42  # Prophet-specific seed
    ```
 
 4. **View in UI:**
-   - Open http://localhost:5173
+   - Open http://localhost:3000 (Docker) or http://localhost:5173 (local dev)
    - Navigate to Trends page
    - Click "Show Accuracy Panel" to see MAE/MAPE metrics and download link
 
@@ -2368,6 +2368,7 @@ app.use(
 app.use(
   cors({
     origin: process.env.CORS_ORIGINS?.split(",") || [
+      "http://localhost:3000",
       "http://localhost:5173",
       "https://goldvision.com",
     ],
@@ -2579,7 +2580,7 @@ Comprehensive guide for examining GoldVision functionality.
 ### Quick Start
 
 1. **Start Application**: `docker-compose up` or `make dev`
-2. **Access Frontend**: http://localhost:5173
+2. **Access Frontend**: http://localhost:3000 (Docker) or http://localhost:5173 (local dev)
 3. **Login**: demo@goldvision.com / demo123
 4. **Explore Features**: Dashboard, Trends, Alerts, Admin, Regional Pricing, Research
 

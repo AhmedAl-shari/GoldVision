@@ -389,7 +389,7 @@ POSTGRES_PASSWORD=changeme
 
 ### Service Ports
 
-- **Frontend:** 3000 (dev) or 5173 (production)
+- **Frontend:** 3000 (Docker) or 5173 (local `npm run dev`)
 - **Backend:** 8000
 - **Prophet:** 8001
 - **PostgreSQL:** 5433 (host) / 5432 (container)
