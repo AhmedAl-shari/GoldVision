@@ -374,7 +374,7 @@ const RealTimeStreaming: React.FC<RealTimeStreamingProps> = ({
         if (isRelative && onLocal && isStatic) {
           base = `http://${window.location.hostname}:8000`;
         }
-      } catch {}
+      } catch { /* ignore */ }
       const sseUrl = `${base}/stream/prices?asset=${encodeURIComponent(
         settings.asset
       )}&currency=${encodeURIComponent(settings.currency)}`;
@@ -420,7 +420,7 @@ const RealTimeStreaming: React.FC<RealTimeStreamingProps> = ({
               messagesReceived: prev.messagesReceived + 1,
               lastUpdate: now,
             }));
-          } catch (_) {}
+          } catch (_) { /* ignore */ }
         })();
 
         pollingRef.current = setInterval(async () => {
@@ -481,7 +481,7 @@ const RealTimeStreaming: React.FC<RealTimeStreamingProps> = ({
         if (!isConnected && sseRef.current) {
           try {
             sseRef.current.close();
-          } catch {}
+          } catch { /* ignore */ }
           sseRef.current = null;
           // Switch to polling immediately on timeout
           startPolling();
@@ -620,14 +620,14 @@ const RealTimeStreaming: React.FC<RealTimeStreamingProps> = ({
                 messagesReceived: prev.messagesReceived + 1,
                 lastUpdate: now,
               }));
-            } catch (_) {}
+            } catch (_) { /* ignore */ }
           }, 5000);
           setIsConnecting(false);
           setIsConnected(true);
           setConnectionMode("polling");
           setStreamingStats((prev) => ({ ...prev, connected: true }));
         }
-      } catch {}
+      } catch { /* ignore */ }
     }
   }, [
     isPaused,
@@ -662,7 +662,7 @@ const RealTimeStreaming: React.FC<RealTimeStreamingProps> = ({
           if (isRelative && onLocal && isStatic) {
             base = `http://${window.location.hostname}:8000`;
           }
-        } catch {}
+        } catch { /* ignore */ }
         // Seed immediately so the first price shows right away
         (async () => {
           try {
@@ -700,7 +700,7 @@ const RealTimeStreaming: React.FC<RealTimeStreamingProps> = ({
             setIsConnected(true);
             setConnectionMode("polling");
             onConnectionChange?.(true);
-          } catch (_) {}
+          } catch (_) { /* ignore */ }
         })();
 
         pollingRef.current = setInterval(async () => {
@@ -740,14 +740,14 @@ const RealTimeStreaming: React.FC<RealTimeStreamingProps> = ({
             setIsConnected(true);
             setConnectionMode("polling");
             onConnectionChange?.(true);
-          } catch (_) {}
+          } catch (_) { /* ignore */ }
         }, 5000);
         setIsConnecting(false);
         setIsConnected(true);
         setConnectionMode("polling");
         setStreamingStats((prev) => ({ ...prev, connected: true }));
       }
-    } catch {}
+    } catch { /* ignore */ }
 
     if (!sseRef.current) {
       connectSSE();
@@ -805,7 +805,7 @@ const RealTimeStreaming: React.FC<RealTimeStreamingProps> = ({
       if (sseRef.current) {
         try {
           sseRef.current.close();
-        } catch {}
+        } catch { /* ignore */ }
         sseRef.current = null;
       }
       setIsConnected(false);

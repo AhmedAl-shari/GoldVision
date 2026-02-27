@@ -75,7 +75,7 @@ const PushNotificationButton: React.FC = () => {
   const urlBase64ToUint8Array = (base64String: string) => {
     const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
     const base64 = (base64String + padding)
-      .replace(/\-/g, "+")
+      .replace(/-/g, "+")
       .replace(/_/g, "/");
 
     const rawData = window.atob(base64);
@@ -478,7 +478,7 @@ const PushNotificationButton: React.FC = () => {
 
         // If old format, try to infer push success from message
         let pushResult = response.data.push || {};
-        let emailResult = response.data.email || {};
+        const emailResult = response.data.email || {};
 
         if (!hasNewFormat) {
           // Old format: message like "Test notification sent to 1 device(s)"

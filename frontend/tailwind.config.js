@@ -16,7 +16,6 @@ export default {
         muted: "rgb(var(--gv-color-muted) / <alpha-value>)",
         card: "rgb(var(--gv-color-bg) / <alpha-value>)",
         "card-foreground": "rgb(var(--gv-color-fg) / <alpha-value>)",
-        primary: "rgb(var(--gv-color-primary) / <alpha-value>)",
         "primary-foreground":
           "rgb(var(--gv-color-primary-foreground) / <alpha-value>)",
         secondary: "rgb(var(--gv-color-secondary) / <alpha-value>)",
@@ -27,10 +26,8 @@ export default {
           "rgb(var(--gv-color-accent-foreground) / <alpha-value>)",
         border: "rgb(var(--gv-color-border) / <alpha-value>)",
         ring: "rgb(var(--gv-color-ring) / <alpha-value>)",
-      },
-      /* legacy palette kept for compatibility */
-      colors: {
         primary: {
+          DEFAULT: "rgb(var(--gv-color-primary) / <alpha-value>)",
           50: "#eff6ff",
           500: "#3b82f6",
           600: "#2563eb",
