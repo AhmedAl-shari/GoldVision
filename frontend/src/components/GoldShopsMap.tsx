@@ -1323,10 +1323,10 @@ const GoldShopsMap: React.FC<GoldShopsMapProps> = ({
 
       // Component to update map center when governorate/district changes
       const MapCenterUpdater = () => {
-        if (!useMap) return null;
         const map = useMap();
         const prevCenterRef = useRef<[number, number] | null>(null);
         const prevZoomRef = useRef<number | null>(null);
+        if (!map) return null;
 
         useEffect(() => {
           const newCenter = center as [number, number];

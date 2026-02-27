@@ -41,23 +41,13 @@ const ForecastChart = ({
   // Get spot price as fallback
   const { data: spotData } = useSpotRate();
 
-  if (!historicalData || !forecastData) {
-    return (
-      <div className="flex items-center justify-center h-96 text-gray-500 dark:text-gray-400">
-        <div className="text-center">
-          <BarChart3 className="h-12 w-12 mx-auto mb-4 opacity-50" />
-          <p>No data available</p>
-        </div>
-      </div>
-    );
-  }
-
   const isDark =
     typeof window !== "undefined" &&
     document.documentElement.classList.contains("dark");
 
-  // Prepare comprehensive chart data
+  // Prepare comprehensive chart data (hooks must run unconditionally)
   const chartData = useMemo(() => {
+    if (!historicalData?.length || !forecastData?.length) return [];
     const allData = [
       ...historicalData.map((item) => ({
         date: new Date(item.ds).getTime(),
@@ -99,8 +89,20 @@ const ForecastChart = ({
     return chartData.slice(brushIndex.start, brushIndex.end + 1);
   }, [chartData, brushIndex]);
 
-  const splitIndex = historicalData.length;
+  const splitIndex = historicalData?.length ?? 0;
   const splitDate = chartData[splitIndex - 1]?.date;
+
+  // Early return after all hooks (no data UI)
+  if (!historicalData?.length || !forecastData?.length) {
+    return (
+      <div className="flex items-center justify-center h-96 text-gray-500 dark:text-gray-400">
+        <div className="text-center">
+          <BarChart3 className="h-12 w-12 mx-auto mb-4 opacity-50" />
+          <p>No data available</p>
+        </div>
+      </div>
+    );
+  }
 
   // Calculate key metrics with better fallback handling
   // PRIORITY: Live spot price first (most up-to-date), then historical data

@@ -82,7 +82,7 @@ interface QAResults {
 }
 
 // Global results storage
-let qaResults: QAResults = {
+const qaResults: QAResults = {
   timestamp: new Date().toISOString(),
   baseUrl: BASE_URL,
   summary: {
@@ -332,8 +332,10 @@ test.afterAll(async () => {
     );
   }
 
-  // Save QA summary
+  // Save QA summary (Node.js APIs in Playwright test context)
+  // eslint-disable-next-line @typescript-eslint/no-require-imports -- required in Node/Playwright
   const fs = require('fs');
+  // eslint-disable-next-line @typescript-eslint/no-require-imports -- required in Node/Playwright
   const path = require('path');
   const artifactsDir = path.join(__dirname, '..', '..', 'artifacts');
   
