@@ -22,13 +22,11 @@ jobs:
 
       - name: Install dependencies
         run: |
-          cd goldvision
           npm install
           npm install -g tsx
 
       - name: Start services
         run: |
-          cd goldvision
           # Start backend and prophet service
           npm run dev:api &
           npm run dev:prophet &
@@ -41,9 +39,7 @@ jobs:
           curl -f http://localhost:8001/health || exit 1
 
       - name: Run synthetic checks
-        run: |
-          cd goldvision
-          npm run synthetic:check
+        run: npm run synthetic:check
         env:
           GOLDVISION_URL: http://localhost:8000
 
@@ -52,7 +48,7 @@ jobs:
         if: always()
         with:
           name: synthetic-monitoring-${{ github.run_number }}
-          path: goldvision/artifacts/synthetic/
+          path: artifacts/synthetic/
           retention-days: 30
 
       - name: Comment on PR (if applicable)
@@ -64,7 +60,7 @@ jobs:
             const path = require('path');
 
             try {
-              const summaryPath = path.join('goldvision/artifacts/synthetic/latest-summary.json');
+              const summaryPath = path.join('artifacts/synthetic/latest-summary.json');
               if (fs.existsSync(summaryPath)) {
                 const summary = JSON.parse(fs.readFileSync(summaryPath, 'utf8'));
                 
@@ -99,7 +95,7 @@ jobs:
             const path = require('path');
 
             try {
-              const summaryPath = path.join('goldvision/artifacts/synthetic/latest-summary.json');
+              const summaryPath = path.join('artifacts/synthetic/latest-summary.json');
               let issueBody = '## 🚨 Synthetic Monitoring Failure\n\n';
               
               if (fs.existsSync(summaryPath)) {
