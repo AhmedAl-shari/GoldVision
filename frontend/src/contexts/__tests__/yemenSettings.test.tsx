@@ -199,7 +199,7 @@ describe("YemenSettingsContext", () => {
   });
 
   describe("URL Persistence", () => {
-    it("should load settings from URL parameters", () => {
+    it("should use defaults when not on a Yemen-relevant page (URL params ignored)", () => {
       mockSearchParams.get.mockImplementation((key: string) => {
         const params: Record<string, string> = {
           region: "SANAA",
@@ -211,9 +211,10 @@ describe("YemenSettingsContext", () => {
 
       const { result } = renderHook(() => useYemenSettings(), { wrapper });
 
-      expect(result.current.settings.region).toBe("SANAA");
-      expect(result.current.settings.unit).toBe("tola");
-      expect(result.current.settings.karat).toBe(22);
+      // Context only reads URL when pathname is in yemenRelevantPages (empty in prod)
+      expect(result.current.settings.region).toBe("ADEN");
+      expect(result.current.settings.unit).toBe("gram");
+      expect(result.current.settings.karat).toBe(24);
     });
 
     it("should fallback to localStorage when no URL params", () => {
@@ -243,7 +244,7 @@ describe("YemenSettingsContext", () => {
       expect(result.current.settings.karat).toBe(24);
     });
 
-    it("should update URL when settings change", () => {
+    it("should not update URL when settings change (not on Yemen-relevant page)", () => {
       const { result } = renderHook(() => useYemenSettings(), { wrapper });
 
       act(() => {
@@ -254,10 +255,11 @@ describe("YemenSettingsContext", () => {
         });
       });
 
-      expect(mockSetSearchParams).toHaveBeenCalledWith(
-        expect.any(URLSearchParams),
-        { replace: true }
-      );
+      // Context only updates URL when pathname is in yemenRelevantPages (empty)
+      expect(result.current.settings.region).toBe("IBB");
+      expect(result.current.settings.unit).toBe("mithqal");
+      expect(result.current.settings.karat).toBe(18);
+      expect(mockSetSearchParams).not.toHaveBeenCalled();
     });
   });
 

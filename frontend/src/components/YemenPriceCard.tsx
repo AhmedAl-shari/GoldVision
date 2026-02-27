@@ -37,6 +37,14 @@ const YemenPriceCard: React.FC<YemenPriceCardProps> = ({
   } = useYemenSettings();
   const { locale, t } = useLocale();
 
+  const formatDate = (dateStr: string) => {
+    try {
+      return format(new Date(dateStr), locale === "ar" ? "dd/MM/yyyy" : "MMM d, yyyy");
+    } catch {
+      return dateStr;
+    }
+  };
+
   const formatPriceWithYemenSettings = (price?: number) => {
     if (!price) return "N/A";
 
@@ -52,8 +60,6 @@ const YemenPriceCard: React.FC<YemenPriceCardProps> = ({
     // Format based on currency (assuming USD for now, could be extended)
     return formatPrice(convertedPrice, "USD");
   };
-
-  // Use formatDate from useLocale hook
 
   const getTooltipContent = () => {
     if (!price || !showTooltip) return "";
