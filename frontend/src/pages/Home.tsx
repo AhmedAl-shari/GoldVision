@@ -34,14 +34,14 @@ function Home() {
   }, []);
 
   // Lightweight CTA tracking
-  const track = (event: string, props?: Record<string, any>) => {
+  const track = (event: string, props?: Record<string, unknown>) => {
     try {
       // gtag or GTM if present
-      // @ts-ignore
+      // @ts-expect-error gtag may exist on window from Google Analytics
       if (window.gtag) window.gtag("event", event, props || {});
-      // @ts-ignore
+      // @ts-expect-error dataLayer may exist on window from GTM
       else if (window.dataLayer) window.dataLayer.push({ event, ...props });
-    } catch {}
+    } catch { /* ignore */ }
   };
 
   return (

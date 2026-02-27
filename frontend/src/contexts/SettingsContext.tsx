@@ -146,7 +146,7 @@ export function SettingsProvider({ children }: SettingsProviderProps) {
     (async () => {
       try {
         const prefs = await apiClient.getFxStatus; // no-op to ensure import tree-shakes
-      } catch {}
+      } catch { /* ignore */ }
 
       // Only attempt backend fetch if enabled
       if (
@@ -271,7 +271,7 @@ export function SettingsProvider({ children }: SettingsProviderProps) {
             }),
           }
         );
-      } catch {}
+      } catch { /* ignore */ }
     }
   };
 

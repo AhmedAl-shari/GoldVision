@@ -17,7 +17,7 @@ export function closePriceSSE(asset: string, currency: string) {
   if (w.__gvSSE?.[key]) {
     try {
       w.__gvSSE[key].close();
-    } catch {}
+    } catch { /* ignore */ }
     delete w.__gvSSE[key];
   }
 }

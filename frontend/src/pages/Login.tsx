@@ -63,7 +63,7 @@ const Login: React.FC = () => {
       try {
         if (rememberMe)
           localStorage.setItem("gv_email", formData.email || email);
-      } catch {}
+      } catch { /* ignore */ }
       navigate("/dashboard");
     } catch (err) {
       setError(err instanceof Error ? err.message : t("loginFailed"));
@@ -78,7 +78,7 @@ const Login: React.FC = () => {
     try {
       const savedRemember = localStorage.getItem("gv_remember_me");
       if (savedRemember) setRememberMe(savedRemember === "1");
-    } catch {}
+    } catch { /* ignore */ }
 
     // Check for OAuth error in URL params
     const oauthError = searchParams.get("error");
@@ -96,7 +96,7 @@ const Login: React.FC = () => {
   useEffect(() => {
     try {
       localStorage.setItem("gv_remember_me", rememberMe ? "1" : "0");
-    } catch {}
+    } catch { /* ignore */ }
   }, [rememberMe]);
 
   const handleGoogleLogin = () => {

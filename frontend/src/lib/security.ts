@@ -27,7 +27,8 @@ export function sanitizeInput(
     return null;
   }
 
-  // Remove null bytes and control characters
+  // Remove null bytes and control characters (intentional: strip control chars)
+  // eslint-disable-next-line no-control-regex -- intentional match for sanitization
   let sanitized = input.replace(/[\x00-\x1F\x7F]/g, "");
 
   // Trim whitespace
