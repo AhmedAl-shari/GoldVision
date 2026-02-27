@@ -23,7 +23,17 @@ jobs:
       - name: Install dependencies
         run: |
           npm install
+          npm run postinstall
           npm install -g tsx
+
+      - name: Setup Python (Prophet service)
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install Prophet service dependencies
+        run: |
+          pip install -r prophet-service/requirements.txt
 
       - name: Start services
         run: |
@@ -32,7 +42,7 @@ jobs:
           npm run dev:prophet &
 
           # Wait for services to be ready
-          sleep 30
+          sleep 45
 
           # Check if services are running
           curl -f http://localhost:8000/health || exit 1
@@ -50,6 +60,7 @@ jobs:
           name: synthetic-monitoring-${{ github.run_number }}
           path: artifacts/synthetic/
           retention-days: 30
+          if-no-files-found: ignore
 
       - name: Comment on PR (if applicable)
         if: github.event_name == 'pull_request'
