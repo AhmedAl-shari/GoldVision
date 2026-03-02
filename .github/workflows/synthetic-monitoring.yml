@@ -35,23 +35,29 @@ jobs:
         run: |
           pip install -r prophet-service/requirements.txt
 
-      - name: Start services
+      - name: Start services and run synthetic checks
         run: |
-          # Start backend and prophet service
+          # Start backend and prophet service in background (same step so they stay alive)
           npm run dev:api &
+          API_PID=$!
           npm run dev:prophet &
+          PROPHET_PID=$!
 
           # Wait for services to be ready
+          echo "Waiting for services to be ready..."
           sleep 45
-
-          # Check if services are running
           curl -f http://localhost:8000/health || exit 1
           curl -f http://localhost:8001/health || exit 1
 
-      - name: Run synthetic checks
-        run: npm run synthetic:check
-        env:
-          GOLDVISION_URL: http://localhost:8000
+          # Run synthetic checks while services are still running
+          export GOLDVISION_URL=http://localhost:8000
+          npm run synthetic:check
+          EXIT_CODE=$?
+
+          # Cleanup background processes
+          kill $API_PID 2>/dev/null || true
+          kill $PROPHET_PID 2>/dev/null || true
+          exit $EXIT_CODE
 
       - name: Upload synthetic artifacts
         uses: actions/upload-artifact@v4
