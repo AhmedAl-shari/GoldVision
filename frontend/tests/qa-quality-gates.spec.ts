@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { injectAxe, checkA11y, getViolations } from 'axe-playwright';
+import AxeBuilder from '@axe-core/playwright';
 
 const BASE_URL = process.env.BASE_URL || 'http://localhost:5173';
 
@@ -130,34 +130,30 @@ async function runLighthouse(page: any, url: string, device: string) {
   }
 }
 
-// Helper function to check accessibility
-async function checkAccessibility(page: any, url: string) {
+// Helper function to check accessibility using @axe-core/playwright
+async function checkAccessibility(
+  page: import('@playwright/test').Page,
+  url: string
+) {
   try {
     await page.goto(url);
     await page.waitForLoadState('networkidle');
-    
-    // Inject axe-core
-    await injectAxe(page);
-    
-    // Run accessibility check
-    await checkA11y(page, null, {
-      detailedReport: true,
-      detailedReportOptions: { html: true }
-    });
 
-    // Get violations
-    const violations = await getViolations(page, null);
-    
-    const serious = violations.filter(v => v.impact === 'serious').length;
-    const moderate = violations.filter(v => v.impact === 'moderate').length;
-    const minor = violations.filter(v => v.impact === 'minor').length;
+    const results = await new AxeBuilder({ page })
+      .withTags(['wcag2a', 'wcag2aa', 'wcag21aa'])
+      .analyze();
+
+    const violations = results.violations;
+    const serious = violations.filter((v) => v.impact === 'serious').length;
+    const moderate = violations.filter((v) => v.impact === 'moderate').length;
+    const minor = violations.filter((v) => v.impact === 'minor').length;
 
     return {
       violations: violations.length,
       serious,
       moderate,
       minor,
-      details: violations
+      details: violations,
     };
   } catch (error) {
     console.error(`Accessibility check failed for ${url}:`, error);
@@ -166,7 +162,7 @@ async function checkAccessibility(page: any, url: string) {
       serious: 0,
       moderate: 0,
       minor: 0,
-      details: []
+      details: [],
     };
   }
 }
