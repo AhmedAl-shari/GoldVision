@@ -37,20 +37,34 @@ jobs:
 
       - name: Start services and run synthetic checks
         run: |
+          # Use 127.0.0.1 to avoid IPv6 (::1) connection refused when backend listens on IPv4
+          API_URL="http://127.0.0.1:8000"
+          PROPHET_URL="http://127.0.0.1:8001"
+
           # Start backend and prophet service in background (same step so they stay alive)
           npm run dev:api &
           API_PID=$!
           npm run dev:prophet &
           PROPHET_PID=$!
 
-          # Wait for services to be ready
-          echo "Waiting for services to be ready..."
-          sleep 45
-          curl -f http://localhost:8000/health || exit 1
-          curl -f http://localhost:8001/health || exit 1
+          # Wait for services with retry (avoid fixed sleep; max 90s)
+          echo "Waiting for API and Prophet to be ready..."
+          for i in $(seq 1 18); do
+            if curl -sf "$API_URL/health" >/dev/null && curl -sf "$PROPHET_URL/health" >/dev/null; then
+              echo "Services ready after $((i * 5))s"
+              break
+            fi
+            if [ "$i" -eq 18 ]; then
+              echo "Services did not become ready in time"
+              kill $API_PID 2>/dev/null || true
+              kill $PROPHET_PID 2>/dev/null || true
+              exit 1
+            fi
+            sleep 5
+          done
 
           # Run synthetic checks while services are still running
-          export GOLDVISION_URL=http://localhost:8000
+          export GOLDVISION_URL="$API_URL"
           npm run synthetic:check
           EXIT_CODE=$?
 
