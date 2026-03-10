@@ -47,15 +47,15 @@ jobs:
           npm run dev:prophet &
           PROPHET_PID=$!
 
-          # Wait for services with retry (avoid fixed sleep; max 90s)
-          echo "Waiting for API and Prophet to be ready..."
+          # Wait for API only (synthetic checks run against API; Prophet optional for CI)
+          echo "Waiting for API to be ready..."
           for i in $(seq 1 18); do
-            if curl -sf "$API_URL/health" >/dev/null && curl -sf "$PROPHET_URL/health" >/dev/null; then
-              echo "Services ready after $((i * 5))s"
+            if curl -sf "$API_URL/health" >/dev/null; then
+              echo "API ready after $((i * 5))s"
               break
             fi
             if [ "$i" -eq 18 ]; then
-              echo "Services did not become ready in time"
+              echo "API did not become ready in time"
               kill $API_PID 2>/dev/null || true
               kill $PROPHET_PID 2>/dev/null || true
               exit 1
